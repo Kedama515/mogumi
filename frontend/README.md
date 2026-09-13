@@ -25,11 +25,14 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 
 ログインユーザーの作成は`backend`側の`scripts/create_user.py`から行う(このアプリに登録画面はない)。
 
+画面下部に小さく薄い字でClaude API利用料の累計(このブラウザの`localStorage`に保存、USD)を表示する。献立提案を呼ぶたびに`api_usage.cost_usd`を加算していく(タブをまたいでも常時表示)。
+
 ## ディレクトリ構成
 
-- `src/api.ts` — バックエンドAPIの呼び出し関数・認証トークンの保持をまとめたクライアント
+- `src/api.ts` — バックエンドAPIの呼び出し関数・認証トークンの保持・API利用料累計の記録をまとめたクライアント
 - `src/types.ts` — バックエンドのPydanticスキーマに対応するTypeScript型
 - `src/pages/` — タブごとの画面コンポーネント(`LoginPage`含む)
+- `src/components/CostFooter.tsx` — 画面下部のAPI利用料表示
 - `src/App.tsx` — ログイン状態の管理とタブ切り替えの入れ物
 
 ## ビルド

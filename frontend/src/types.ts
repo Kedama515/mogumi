@@ -56,6 +56,12 @@ export interface TimelineStep {
   description: string
 }
 
+export interface ApiUsage {
+  input_tokens: number
+  output_tokens: number
+  cost_usd: number | null
+}
+
 export interface SuggestionResponse {
   dishes: SuggestedDish[]
   timeline: TimelineStep[]
@@ -63,6 +69,7 @@ export interface SuggestionResponse {
   estimated_cost_yen_per_serving: number | null
   tags: Tags
   reasoning: string
+  api_usage: ApiUsage
 }
 
 export interface Recipe {

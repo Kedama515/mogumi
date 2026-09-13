@@ -26,6 +26,27 @@ export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler
 }
 
+const COST_KEY = 'mogumi_api_cost_total_usd'
+
+export function getTotalCost(): number {
+  const raw = localStorage.getItem(COST_KEY)
+  return raw ? parseFloat(raw) : 0
+}
+
+let costListeners: ((total: number) => void)[] = []
+export function onCostChange(listener: (total: number) => void): () => void {
+  costListeners.push(listener)
+  return () => {
+    costListeners = costListeners.filter((l) => l !== listener)
+  }
+}
+
+function addCost(amount: number) {
+  const total = getTotalCost() + amount
+  localStorage.setItem(COST_KEY, String(total))
+  costListeners.forEach((l) => l(total))
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -74,8 +95,16 @@ export const api = {
   createMeal: (meal: Omit<Meal, 'id'>) =>
     request<Meal>('/meals', { method: 'POST', body: JSON.stringify(meal) }),
 
-  suggest: (req: SuggestionRequest) =>
-    request<SuggestionResponse>('/suggestions', { method: 'POST', body: JSON.stringify(req) }),
+  suggest: async (req: SuggestionRequest) => {
+    const result = await request<SuggestionResponse>('/suggestions', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+    if (result.api_usage.cost_usd != null) {
+      addCost(result.api_usage.cost_usd)
+    }
+    return result
+  },
 
   listRecipes: () => request<Recipe[]>('/recipes'),
   createRecipe: (recipe: Omit<Recipe, 'id'>) =>

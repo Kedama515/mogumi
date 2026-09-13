@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { clearToken, getToken, setUnauthorizedHandler } from './api'
+import { CostFooter } from './components/CostFooter'
 import { FridgePage } from './pages/FridgePage'
 import { HistoryPage } from './pages/HistoryPage'
 import { LoginPage } from './pages/LoginPage'
@@ -59,6 +60,7 @@ function App() {
       <main>
         <Active />
       </main>
+      <CostFooter />
     </div>
   )
 }

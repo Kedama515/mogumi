@@ -18,5 +18,5 @@ def suggest_menu(request: schemas.SuggestionRequest, db: Session = Depends(get_d
         user_request=request.user_request,
         lookback_days=request.lookback_days,
     )
-    result = propose_menu(prompt)
-    return result
+    menu_data, usage = propose_menu(prompt)
+    return schemas.SuggestionResponse(**menu_data, api_usage=usage)

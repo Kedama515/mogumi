@@ -94,6 +94,12 @@ class TimelineStep(BaseModel):
     description: str
 
 
+class ApiUsage(BaseModel):
+    input_tokens: int
+    output_tokens: int
+    cost_usd: Optional[float] = None
+
+
 class SuggestionResponse(BaseModel):
     dishes: list[SuggestedDish]
     timeline: list[TimelineStep]
@@ -101,6 +107,7 @@ class SuggestionResponse(BaseModel):
     estimated_cost_yen_per_serving: Optional[float] = None
     tags: Tags
     reasoning: str
+    api_usage: ApiUsage
 
 
 class RecipeIn(BaseModel):

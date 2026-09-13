@@ -285,3 +285,17 @@
   margin: 0.5rem 0 0.25rem;
   color: var(--accent-dark);
 }
+
+.cost-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--muted);
+  opacity: 0.7;
+  padding: 0.3rem;
+  background: var(--bg);
+  pointer-events: none;
+}

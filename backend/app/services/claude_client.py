@@ -79,24 +79,30 @@ def get_client() -> Anthropic:
     return _client
 
 
-def _print_usage_cost(usage) -> None:
+def _cost_usd(usage) -> float | None:
     pricing = MODEL_PRICING_PER_MTOK.get(MODEL)
     if pricing is None:
+        return None
+    return (
+        usage.input_tokens * pricing["input"] + usage.output_tokens * pricing["output"]
+    ) / 1_000_000
+
+
+def _print_usage(usage, cost_usd: float | None) -> None:
+    if cost_usd is None:
         print(
             f"[mogumi] Claude API使用量: input={usage.input_tokens} "
             f"output={usage.output_tokens} tokens(料金表未登録のモデルのため費用は算出せず)"
         )
         return
-    cost_usd = (
-        usage.input_tokens * pricing["input"] + usage.output_tokens * pricing["output"]
-    ) / 1_000_000
     print(
         f"[mogumi] Claude API使用量: input={usage.input_tokens} output={usage.output_tokens} "
         f"tokens, 今回の費用 ≈ ${cost_usd:.4f}"
     )
 
 
-def propose_menu(prompt: str) -> dict:
+def propose_menu(prompt: str) -> tuple[dict, dict]:
+    """献立提案データと、今回のAPI呼び出しの使用量({input_tokens, output_tokens, cost_usd})を返す。"""
     client = get_client()
     response = client.messages.create(
         model=MODEL,
@@ -105,8 +111,15 @@ def propose_menu(prompt: str) -> dict:
         tool_choice={"type": "tool", "name": "propose_menu"},
         messages=[{"role": "user", "content": prompt}],
     )
-    _print_usage_cost(response.usage)
+    usage = response.usage
+    cost_usd = _cost_usd(usage)
+    _print_usage(usage, cost_usd)
+    usage_info = {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "cost_usd": cost_usd,
+    }
     for block in response.content:
         if block.type == "tool_use" and block.name == "propose_menu":
-            return block.input
+            return block.input, usage_info
     raise RuntimeError("Claude did not return a propose_menu tool call")

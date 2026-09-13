@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
+import { clearToken, getToken, setUnauthorizedHandler } from './api'
 import { FridgePage } from './pages/FridgePage'
 import { HistoryPage } from './pages/HistoryPage'
+import { LoginPage } from './pages/LoginPage'
 import { PantryPage } from './pages/PantryPage'
 import { SuggestPage } from './pages/SuggestPage'
 
@@ -14,12 +16,32 @@ const TABS = [
 
 function App() {
   const [tab, setTab] = useState<(typeof TABS)[number]['key']>('suggest')
+  const [authed, setAuthed] = useState(() => Boolean(getToken()))
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setAuthed(false))
+  }, [])
+
+  if (!authed) {
+    return <LoginPage onLogin={() => setAuthed(true)} />
+  }
+
+  function handleLogout() {
+    clearToken()
+    setAuthed(false)
+  }
+
   const Active = TABS.find((t) => t.key === tab)!.Component
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1>mogumi</h1>
+        <div className="header-row">
+          <h1>mogumi</h1>
+          <button className="ghost" onClick={handleLogout}>
+            ログアウト
+          </button>
+        </div>
         <nav className="tabs">
           {TABS.map((t) => (
             <button

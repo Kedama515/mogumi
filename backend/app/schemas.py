@@ -4,6 +4,11 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
 class FridgeItemIn(BaseModel):
     name: str
     added_date: Optional[date] = None

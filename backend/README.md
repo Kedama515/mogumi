@@ -8,18 +8,27 @@ FastAPI + SQLite backend for mogumi(冷蔵庫管理 → 献立提案 → レシ�
     python3 -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
-    cp .env.example .env  # ANTHROPIC_API_KEY を設定
+    cp .env.example .env
+    # .env を編集: ANTHROPIC_API_KEY と MOGUMI_SECRET_KEY(下記コマンドで生成)を設定
+    python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+
+ログインユーザーを作成する(公開の登録エンドポイントはないため、このスクリプトから作る):
+
+    python3 -m scripts.create_user
 
 ## 起動
 
     uvicorn app.main:app --reload
 
-http://127.0.0.1:8000/docs で Swagger UI から動作確認できる。起動時に `mogumi.db`(SQLite)が自動生成される。
+http://127.0.0.1:8000/docs で Swagger UI から動作確認できる(右上の Authorize からログインすれば認証つきエンドポイントも試せる)。起動時に `mogumi.db`(SQLite)が自動生成される。
 
 DBのテーブル定義・ER図は [`docs/data-model.md`](docs/data-model.md) を参照。
 
 ## エンドポイント(MVP)
 
+`/api/auth/login` 以外は全てログイン必須(`Authorization: Bearer <token>`)。
+
+- `POST /api/auth/login` — ログイン(フォームエンコード、`username`/`password`)。JWTアクセストークンを返す(有効期限30日、個人利用のみ想定のため長め)
 - `GET/POST/DELETE /api/fridge` — 冷蔵庫の中身
 - `GET/POST/DELETE /api/pantry` — 常備品
 - `GET/POST /api/meals` — 献立記録(直近分の取得、新規記録)。栄養・材料費は献立(1人前)単位で持ち、品目は名前のみの配列(`menu`)
@@ -36,6 +45,5 @@ fridge_items / pantry_items / meals を一度全削除してから取り込み�
 ## 未実装 / 次にやること
 
 - レシピ(recipes)のCRUD
-- 認証(今のところ個人利用のみ想定のため未実装)
 
 Web UIは [`../frontend`](../frontend) を参照。

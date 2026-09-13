@@ -9,6 +9,12 @@ erDiagram
     MEALS ||--o{ MEAL_DISHES : "has"
     MEALS ||--o{ MEAL_TAGS : "has"
 
+    USERS {
+        int id PK
+        string username UK
+        string password_hash
+    }
+
     FRIDGE_ITEMS {
         int id PK
         string name
@@ -60,6 +66,15 @@ erDiagram
 ```
 
 ## テーブル詳細
+
+### users(ログインユーザー)
+個人利用のみ想定のため、公開の登録エンドポイントはなく`scripts/create_user.py`から作成する。他のテーブルとの直接のリレーションはなく、認証(JWT発行・検証)専用。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| id | int (PK) | |
+| username | string (unique) | |
+| password_hash | string | bcryptハッシュ |
 
 ### fridge_items(冷蔵庫の中身)
 今ある食材のみを保持する(消費履歴は残さない)。使い切ったら行ごと削除する運用。

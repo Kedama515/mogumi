@@ -13,6 +13,8 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 
 ## 画面構成
 
+未ログイン時はログイン画面のみ表示される(`POST /api/auth/login`)。ログイン成功時に受け取ったJWTを`localStorage`に保存し、以後のAPIリクエストに`Authorization: Bearer`ヘッダーとして付与する。401が返ってきたら自動的にトークンを破棄してログイン画面に戻す。
+
 | タブ | 役割 | 対応API |
 |---|---|---|
 | 献立提案 | フォーム(食事・人数・直近日数・希望)を送って献立全体の提案を受け取り、気に入ったら記録する | `POST /api/suggestions`, `POST /api/meals` |
@@ -20,12 +22,14 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 | 常備品 | 常備品の一覧・追加・削除 | `GET/POST/DELETE /api/pantry` |
 | 履歴 | 直近N日分の献立記録の一覧 | `GET /api/meals` |
 
+ログインユーザーの作成は`backend`側の`scripts/create_user.py`から行う(このアプリに登録画面はない)。
+
 ## ディレクトリ構成
 
-- `src/api.ts` — バックエンドAPIの呼び出し関数をまとめたクライアント
+- `src/api.ts` — バックエンドAPIの呼び出し関数・認証トークンの保持をまとめたクライアント
 - `src/types.ts` — バックエンドのPydanticスキーマに対応するTypeScript型
-- `src/pages/` — タブごとの画面コンポーネント
-- `src/App.tsx` — タブ切り替えの入れ物
+- `src/pages/` — タブごとの画面コンポーネント(`LoginPage`含む)
+- `src/App.tsx` — ログイン状態の管理とタブ切り替えの入れ物
 
 ## ビルド
 
@@ -36,5 +40,4 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 ## 未実装 / 次にやること
 
 - レシピ管理画面
-- 認証(今のところ個人利用のみ想定のため未実装)
 - 本番ビルドの配信方法(現状はVite dev serverでの動作のみ確認済み)

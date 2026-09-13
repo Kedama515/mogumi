@@ -6,6 +6,13 @@ _client: Anthropic | None = None
 
 MODEL = os.environ.get("MOGUMI_CLAUDE_MODEL", "claude-sonnet-5")
 
+# 100万トークンあたりの価格(USD)。https://docs.claude.com/en/docs/about-claude/pricing (2026-06時点)
+MODEL_PRICING_PER_MTOK = {
+    "claude-sonnet-5": {"input": 2.00, "output": 10.00},
+    "claude-opus-5": {"input": 5.00, "output": 25.00},
+    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
+}
+
 MENU_PROPOSAL_TOOL = {
     "name": "propose_menu",
     "description": "提案する献立全体(複数品)を構造化データとして返す",
@@ -72,6 +79,23 @@ def get_client() -> Anthropic:
     return _client
 
 
+def _print_usage_cost(usage) -> None:
+    pricing = MODEL_PRICING_PER_MTOK.get(MODEL)
+    if pricing is None:
+        print(
+            f"[mogumi] Claude API使用量: input={usage.input_tokens} "
+            f"output={usage.output_tokens} tokens(料金表未登録のモデルのため費用は算出せず)"
+        )
+        return
+    cost_usd = (
+        usage.input_tokens * pricing["input"] + usage.output_tokens * pricing["output"]
+    ) / 1_000_000
+    print(
+        f"[mogumi] Claude API使用量: input={usage.input_tokens} output={usage.output_tokens} "
+        f"tokens, 今回の費用 ≈ ${cost_usd:.4f}"
+    )
+
+
 def propose_menu(prompt: str) -> dict:
     client = get_client()
     response = client.messages.create(
@@ -81,6 +105,7 @@ def propose_menu(prompt: str) -> dict:
         tool_choice={"type": "tool", "name": "propose_menu"},
         messages=[{"role": "user", "content": prompt}],
     )
+    _print_usage_cost(response.usage)
     for block in response.content:
         if block.type == "tool_use" and block.name == "propose_menu":
             return block.input

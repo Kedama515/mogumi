@@ -33,7 +33,7 @@ DBのテーブル定義・ER図は [`docs/data-model.md`](docs/data-model.md) �
 - `GET/POST/DELETE /api/pantry` — 常備品
 - `GET/POST /api/meals` — 献立記録(直近分の取得、新規記録)。栄養・材料費は献立(1人前)単位で持ち、品目は名前のみの配列(`menu`)
 - `GET/POST/DELETE /api/recipes`, `GET /api/recipes/{id}` — お気に入りレシピ(材料・手順・タグ)
-- `POST /api/suggestions` — 献立提案。冷蔵庫・常備品・直近N日の献立(タグ含む)を踏まえて、Claude APIに複数品の献立+調理タイムラインを提案させる。返ってきた提案が気に入ったら `POST /api/meals` で記録する想定(提案自体はDBに保存しない)
+- `POST /api/suggestions` — 献立提案。冷蔵庫・常備品・直近N日の献立(タグ含む)を踏まえて、Claude APIに複数品の献立+調理タイムラインを提案させる。返ってきた提案が気に入ったら `POST /api/meals` で記録する想定(提案自体はDBに保存しない)。呼び出すたびに使用トークン数と概算費用(USD)をサーバーの標準出力にログする(`app/services/claude_client.py`の料金表は手動更新、モデルを変えたら追記すること)
 
 ## 既存データの移行
 

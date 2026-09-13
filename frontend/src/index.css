@@ -1,0 +1,38 @@
+:root {
+  color-scheme: light;
+  --bg: #fdf8f2;
+  --card: #ffffff;
+  --text: #3b2f2a;
+  --muted: #8a7a70;
+  --accent: #d97b3f;
+  --accent-dark: #b85f28;
+  --border: #ecdfd2;
+  font-family: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--text);
+}

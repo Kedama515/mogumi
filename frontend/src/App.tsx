@@ -2,19 +2,19 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { clearToken, getToken, setUnauthorizedHandler } from './api'
 import { CostFooter } from './components/CostFooter'
-import { FridgePage } from './pages/FridgePage'
+import { FridgeManagementPage } from './pages/FridgeManagementPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { LoginPage } from './pages/LoginPage'
-import { PantryPage } from './pages/PantryPage'
 import { RecipePage } from './pages/RecipePage'
+import { SettingsPage } from './pages/SettingsPage'
 import { SuggestPage } from './pages/SuggestPage'
 
 const TABS = [
-  { key: 'suggest', label: '献立提案', Component: SuggestPage },
-  { key: 'fridge', label: '冷蔵庫', Component: FridgePage },
-  { key: 'pantry', label: '常備品', Component: PantryPage },
+  { key: 'suggest', label: '献立作成', Component: SuggestPage },
+  { key: 'fridge', label: '冷蔵庫', Component: FridgeManagementPage },
   { key: 'recipes', label: 'レシピ', Component: RecipePage },
   { key: 'history', label: '履歴', Component: HistoryPage },
+  { key: 'settings', label: '設定', Component: null },
 ] as const
 
 function App() {
@@ -39,28 +39,21 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="header-row">
-          <h1>mogumi</h1>
-          <button className="ghost" onClick={handleLogout}>
-            ログアウト
-          </button>
-        </div>
-        <nav className="tabs">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              className={t.key === tab ? 'tab active' : 'tab'}
-              onClick={() => setTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
+        <h1>mogumi</h1>
       </header>
-      <main>
-        <Active />
-      </main>
+      <main>{Active ? <Active /> : <SettingsPage onLogout={handleLogout} />}</main>
       <CostFooter />
+      <nav className="bottom-nav">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            className={t.key === tab ? 'bottom-nav-item active' : 'bottom-nav-item'}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }

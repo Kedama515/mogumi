@@ -15,25 +15,27 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 
 未ログイン時はログイン画面のみ表示される(`POST /api/auth/login`)。ログイン成功時に受け取ったJWTを`localStorage`に保存し、以後のAPIリクエストに`Authorization: Bearer`ヘッダーとして付与する。401が返ってきたら自動的にトークンを破棄してログイン画面に戻す。
 
+ログイン後は画面下部に5つのタブ(モバイルアプリ風の固定ナビ)を常時表示する。
+
 | タブ | 役割 | 対応API |
 |---|---|---|
-| 献立提案 | フォーム(食事・人数・直近日数・希望)を送って献立全体の提案を受け取り、気に入ったら記録する | `POST /api/suggestions`, `POST /api/meals` |
-| 冷蔵庫 | 冷蔵庫の中身の一覧・追加・削除 | `GET/POST/DELETE /api/fridge` |
-| 常備品 | 常備品の一覧・追加・削除 | `GET/POST/DELETE /api/pantry` |
+| 献立作成 | フォーム(食事・人数・直近日数・希望)を送って献立全体の提案を受け取り、気に入ったら記録する | `POST /api/suggestions`, `POST /api/meals` |
+| 冷蔵庫 | 「冷蔵庫」「常備品」のサブタブ切り替え。それぞれ一覧・追加・削除 | `GET/POST/DELETE /api/fridge`, `/api/pantry` |
 | レシピ | お気に入りレシピの一覧・詳細(材料・手順)・追加・削除 | `GET/POST/DELETE /api/recipes` |
 | 履歴 | 直近N日分の献立記録の一覧 | `GET /api/meals` |
+| 設定 | ログアウト | - |
 
 ログインユーザーの作成は`backend`側の`scripts/create_user.py`から行う(このアプリに登録画面はない)。
 
-画面下部に小さく薄い字で「今回の費用」と「累計(このブラウザの`localStorage`に保存、USD)」を表示する。献立提案を呼ぶたびに`api_usage.cost_usd`で両方を更新する(タブをまたいでも常時表示)。
+画面下部の固定タブナビのすぐ上に、小さく薄い字で「今回の費用」と「累計(このブラウザの`localStorage`に保存、USD)」を表示する。献立作成タブで提案を呼ぶたびに`api_usage.cost_usd`で両方を更新する(タブをまたいでも常時表示)。
 
 ## ディレクトリ構成
 
 - `src/api.ts` — バックエンドAPIの呼び出し関数・認証トークンの保持・API利用料累計の記録をまとめたクライアント
 - `src/types.ts` — バックエンドのPydanticスキーマに対応するTypeScript型
-- `src/pages/` — タブごとの画面コンポーネント(`LoginPage`含む)
+- `src/pages/` — タブごとの画面コンポーネント(`LoginPage`, `SettingsPage`含む)。`FridgeManagementPage`が「冷蔵庫」「常備品」のサブタブをまとめる
 - `src/components/CostFooter.tsx` — 画面下部のAPI利用料表示
-- `src/App.tsx` — ログイン状態の管理とタブ切り替えの入れ物
+- `src/App.tsx` — ログイン状態の管理と下部固定タブナビの入れ物
 
 ## ビルド
 

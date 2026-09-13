@@ -16,8 +16,8 @@ export function CostFooter() {
 
   return (
     <footer className="cost-footer">
-      {last != null && <>今回: ${last.toFixed(4)} / </>}
-      Claude API利用料 累計(このブラウザ): ${total.toFixed(4)}
+      Claude API利用料 {last != null && <>今回: ${last.toFixed(4)} / </>}
+      累計(このブラウザ): ${total.toFixed(4)}
     </footer>
   )
 }

@@ -25,7 +25,7 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 
 ログインユーザーの作成は`backend`側の`scripts/create_user.py`から行う(このアプリに登録画面はない)。
 
-画面下部に小さく薄い字でClaude API利用料の累計(このブラウザの`localStorage`に保存、USD)を表示する。献立提案を呼ぶたびに`api_usage.cost_usd`を加算していく(タブをまたいでも常時表示)。
+画面下部に小さく薄い字で「今回の費用」と「累計(このブラウザの`localStorage`に保存、USD)」を表示する。献立提案を呼ぶたびに`api_usage.cost_usd`で両方を更新する(タブをまたいでも常時表示)。
 
 ## ディレクトリ構成
 

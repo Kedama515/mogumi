@@ -33,8 +33,13 @@ export function getTotalCost(): number {
   return raw ? parseFloat(raw) : 0
 }
 
-let costListeners: ((total: number) => void)[] = []
-export function onCostChange(listener: (total: number) => void): () => void {
+export interface CostUpdate {
+  last: number
+  total: number
+}
+
+let costListeners: ((update: CostUpdate) => void)[] = []
+export function onCostChange(listener: (update: CostUpdate) => void): () => void {
   costListeners.push(listener)
   return () => {
     costListeners = costListeners.filter((l) => l !== listener)
@@ -44,7 +49,7 @@ export function onCostChange(listener: (total: number) => void): () => void {
 function addCost(amount: number) {
   const total = getTotalCost() + amount
   localStorage.setItem(COST_KEY, String(total))
-  costListeners.forEach((l) => l(total))
+  costListeners.forEach((l) => l({ last: amount, total }))
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {

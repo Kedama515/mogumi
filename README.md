@@ -34,6 +34,7 @@ npm run dev
 ```bash
 cd backend && source .venv/bin/activate
 python3 -m scripts.migrate_from_menu_project
+python3 -m scripts.migrate_recipes
 ```
 
 ## 構成
@@ -53,7 +54,7 @@ mogumi/
 | 献立提案(冷蔵庫・履歴を踏まえてClaude APIが献立全体+調理タイムラインを提案) | ✅ backend実装済み・frontend実装済み。ダミーキーでのエラーハンドリングは確認済みだが、実際のAPIキーでの成功パスは未確認 |
 | 献立記録・履歴閲覧 | ✅ backend/frontend とも実装済み |
 | 認証(ユーザーログイン・JWT) | ✅ backend/frontend とも実装済み。ブラウザ操作で動作確認済み |
-| レシピ管理 | ❌ 未着手(テーブルのみ用意) |
+| レシピ管理(一覧/詳細/追加/削除、既存Markdownからの移行) | ✅ backend/frontend とも実装済み。ブラウザ操作で動作確認済み |
 | iOSアプリ | ❌ 未着手(将来的な目標。API構成にしているのはこれを見据えているため) |
 
 ## 運用の元になっているプロジェクトとの関係

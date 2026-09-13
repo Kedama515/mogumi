@@ -5,12 +5,14 @@ import { FridgePage } from './pages/FridgePage'
 import { HistoryPage } from './pages/HistoryPage'
 import { LoginPage } from './pages/LoginPage'
 import { PantryPage } from './pages/PantryPage'
+import { RecipePage } from './pages/RecipePage'
 import { SuggestPage } from './pages/SuggestPage'
 
 const TABS = [
   { key: 'suggest', label: '献立提案', Component: SuggestPage },
   { key: 'fridge', label: '冷蔵庫', Component: FridgePage },
   { key: 'pantry', label: '常備品', Component: PantryPage },
+  { key: 'recipes', label: 'レシピ', Component: RecipePage },
   { key: 'history', label: '履歴', Component: HistoryPage },
 ] as const
 

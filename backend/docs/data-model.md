@@ -8,6 +8,7 @@
 erDiagram
     MEALS ||--o{ MEAL_DISHES : "has"
     MEALS ||--o{ MEAL_TAGS : "has"
+    RECIPES ||--o{ RECIPE_TAGS : "has"
 
     USERS {
         int id PK
@@ -58,10 +59,17 @@ erDiagram
     RECIPES {
         int id PK
         string dish_name
-        string style "本格 / 時短"
         string source_url
         string ingredients "JSON配列(文字列)"
         string steps "JSON配列(文字列)"
+        string memo
+    }
+
+    RECIPE_TAGS {
+        int id PK
+        int recipe_id FK
+        string category "protein / cuisine / cooking_method / style"
+        string value
     }
 ```
 
@@ -129,13 +137,23 @@ erDiagram
 | value | string | 語彙内の値 |
 
 ### recipes(お気に入りレシピ)
-テーブルのみ定義済みで、CRUDエンドポイント・`meals`とのリレーションは未実装(2026-09-14時点)。`dish_name`は`meal_dishes.name`と文字列一致する想定だが、DB上の外部キー制約はまだない。
+CRUD実装済み(2026-09-14〜)。`dish_name`は`meal_dishes.name`と文字列一致する想定だが、DB上の外部キー制約はない(命名のゆらぎがあり得るため)。`ai-project/menu/recipes/*.md`からの移行スクリプト(`scripts/migrate_recipes.py`)あり。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
 | dish_name | string | 料理名 |
-| style | string | `本格` / `時短` |
 | source_url | string | 出典URL(あれば) |
 | ingredients | string | 材料リスト(JSON配列を文字列として保存) |
 | steps | string | 手順リスト(JSON配列を文字列として保存) |
+| memo | string | 任意メモ(出典行以外の地の文・補足など) |
+
+### recipe_tags(レシピのタグ)
+`recipes`に対する1:N。`meal_tags`と同じ構造・語彙(`protein`/`cuisine`/`cooking_method`/`style`)。`style`は「本格」か「時短」かの目線で分類する。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| id | int (PK) | |
+| recipe_id | int (FK → recipes.id) | |
+| category | string | `protein` / `cuisine` / `cooking_method` / `style` |
+| value | string | 語彙内の値 |

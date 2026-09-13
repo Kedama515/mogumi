@@ -78,7 +78,20 @@ class Recipe(Base):
 
     id = Column(Integer, primary_key=True)
     dish_name = Column(String, nullable=False)
-    style = Column(String)  # 本格 / 時短
     source_url = Column(String, default="")
-    ingredients = Column(String)  # JSON-encoded list
-    steps = Column(String)  # JSON-encoded list
+    ingredients = Column(String, nullable=False)  # JSON-encoded list
+    steps = Column(String, nullable=False)  # JSON-encoded list
+    memo = Column(String, default="")
+
+    tags = relationship("RecipeTag", back_populates="recipe", cascade="all, delete-orphan")
+
+
+class RecipeTag(Base):
+    __tablename__ = "recipe_tags"
+
+    id = Column(Integer, primary_key=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    category = Column(String, nullable=False)  # protein / cuisine / cooking_method / style
+    value = Column(String, nullable=False)
+
+    recipe = relationship("Recipe", back_populates="tags")

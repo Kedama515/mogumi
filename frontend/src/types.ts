@@ -11,7 +11,7 @@ export interface PantryItem {
   memo: string
 }
 
-export interface MealTags {
+export interface Tags {
   protein: string[]
   cuisine: string[]
   cooking_method: string[]
@@ -35,7 +35,7 @@ export interface Meal {
   menu: string[]
   nutrition_per_serving: NutritionPerServing
   cost_yen_per_serving: number | null
-  tags: MealTags
+  tags: Tags
 }
 
 export interface SuggestionRequest {
@@ -61,6 +61,16 @@ export interface SuggestionResponse {
   timeline: TimelineStep[]
   nutrition_per_serving: NutritionPerServing
   estimated_cost_yen_per_serving: number | null
-  tags: MealTags
+  tags: Tags
   reasoning: string
+}
+
+export interface Recipe {
+  id: number
+  dish_name: string
+  source_url: string
+  ingredients: string[]
+  steps: string[]
+  memo: string
+  tags: Tags
 }

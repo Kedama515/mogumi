@@ -37,7 +37,7 @@ class PantryItemOut(BaseModel):
     memo: str = ""
 
 
-class MealTags(BaseModel):
+class Tags(BaseModel):
     protein: list[str] = []
     cuisine: list[str] = []
     cooking_method: list[str] = []
@@ -60,7 +60,7 @@ class MealIn(BaseModel):
     menu: list[str]
     nutrition_per_serving: NutritionPerServing = NutritionPerServing()
     cost_yen_per_serving: Optional[float] = None
-    tags: MealTags = MealTags()
+    tags: Tags = Tags()
 
 
 class MealOut(BaseModel):
@@ -73,7 +73,7 @@ class MealOut(BaseModel):
     menu: list[str]
     nutrition_per_serving: NutritionPerServing
     cost_yen_per_serving: Optional[float] = None
-    tags: MealTags
+    tags: Tags
 
 
 class SuggestionRequest(BaseModel):
@@ -99,5 +99,24 @@ class SuggestionResponse(BaseModel):
     timeline: list[TimelineStep]
     nutrition_per_serving: NutritionPerServing
     estimated_cost_yen_per_serving: Optional[float] = None
-    tags: MealTags
+    tags: Tags
     reasoning: str
+
+
+class RecipeIn(BaseModel):
+    dish_name: str
+    source_url: str = ""
+    ingredients: list[str]
+    steps: list[str]
+    memo: str = ""
+    tags: Tags = Tags()
+
+
+class RecipeOut(BaseModel):
+    id: int
+    dish_name: str
+    source_url: str = ""
+    ingredients: list[str]
+    steps: list[str]
+    memo: str = ""
+    tags: Tags

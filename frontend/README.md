@@ -20,6 +20,7 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 | 献立提案 | フォーム(食事・人数・直近日数・希望)を送って献立全体の提案を受け取り、気に入ったら記録する | `POST /api/suggestions`, `POST /api/meals` |
 | 冷蔵庫 | 冷蔵庫の中身の一覧・追加・削除 | `GET/POST/DELETE /api/fridge` |
 | 常備品 | 常備品の一覧・追加・削除 | `GET/POST/DELETE /api/pantry` |
+| レシピ | お気に入りレシピの一覧・詳細(材料・手順)・追加・削除 | `GET/POST/DELETE /api/recipes` |
 | 履歴 | 直近N日分の献立記録の一覧 | `GET /api/meals` |
 
 ログインユーザーの作成は`backend`側の`scripts/create_user.py`から行う(このアプリに登録画面はない)。
@@ -39,5 +40,4 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 
 ## 未実装 / 次にやること
 
-- レシピ管理画面
 - 本番ビルドの配信方法(現状はVite dev serverでの動作のみ確認済み)

@@ -6,15 +6,12 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
+from ..tag_utils import tags_to_schema
 
 router = APIRouter()
 
 
 def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
-    tags: dict[str, list[str]] = {"protein": [], "cuisine": [], "cooking_method": [], "style": []}
-    for tag in meal.tags:
-        tags.setdefault(tag.category, []).append(tag.value)
-
     return schemas.MealOut(
         id=meal.id,
         date=meal.date,
@@ -30,7 +27,7 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
             carb_g=meal.carb_g,
         ),
         cost_yen_per_serving=meal.cost_yen_per_serving,
-        tags=schemas.MealTags(**tags),
+        tags=tags_to_schema(meal.tags),
     )
 
 

@@ -2,6 +2,7 @@ import type {
   FridgeItem,
   Meal,
   PantryItem,
+  Recipe,
   SuggestionRequest,
   SuggestionResponse,
 } from './types'
@@ -75,4 +76,9 @@ export const api = {
 
   suggest: (req: SuggestionRequest) =>
     request<SuggestionResponse>('/suggestions', { method: 'POST', body: JSON.stringify(req) }),
+
+  listRecipes: () => request<Recipe[]>('/recipes'),
+  createRecipe: (recipe: Omit<Recipe, 'id'>) =>
+    request<Recipe>('/recipes', { method: 'POST', body: JSON.stringify(recipe) }),
+  deleteRecipe: (id: number) => request<void>(`/recipes/${id}`, { method: 'DELETE' }),
 }

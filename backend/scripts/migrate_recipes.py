@@ -2,14 +2,18 @@
 
 実行方法(backend/ ディレクトリから):
 
-    python3 -m scripts.migrate_recipes
+    python3 -m scripts.migrate_recipes [username]
+
+username を省略した場合、DBにユーザーが1人だけならそのユーザーのhousehold宛に
+取り込む。複数いる場合は指定が必須。
 
 対象は「YAMLフロントマター(tags) + `# 料理名` + `## 材料`(- 箇条書き) +
 `## 手順`(番号付きリスト) + 任意で `## メモ`・`出典: ...` 行」という
 ai-project/menu/recipes/ の記法。それ以外の地の文(出典行、タイトル直後の
 説明文、末尾の「初出: ...」など)はmemoにまとめて取り込む。
 
-既存のrecipes/recipe_tagsを全削除してから取り込み直すため、何度でも再実行可能。
+指定したhouseholdのrecipes/recipe_tagsを全削除してから取り込み直すため、
+何度でも再実行可能。
 """
 
 import json
@@ -24,6 +28,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from app import models  # noqa: E402
 from app.database import Base, SessionLocal, engine  # noqa: E402
+from scripts._household import resolve_household_id  # noqa: E402
 
 MENU_RECIPES_DIR = BACKEND_DIR.parent.parent / "menu" / "recipes"
 
@@ -112,14 +117,22 @@ def main() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        db.query(models.RecipeTag).delete()
-        db.query(models.Recipe).delete()
+        username = sys.argv[1] if len(sys.argv) > 1 else None
+        household_id = resolve_household_id(db, username)
+
+        db.query(models.RecipeTag).filter(
+            models.RecipeTag.recipe_id.in_(
+                db.query(models.Recipe.id).filter(models.Recipe.household_id == household_id)
+            )
+        ).delete(synchronize_session=False)
+        db.query(models.Recipe).filter(models.Recipe.household_id == household_id).delete()
         db.commit()
 
         count = 0
         for path in sorted(MENU_RECIPES_DIR.glob("*.md")):
             data = parse_recipe_file(path)
             db_recipe = models.Recipe(
+                household_id=household_id,
                 dish_name=data["dish_name"],
                 source_url=data["source_url"],
                 ingredients=json.dumps(data["ingredients"], ensure_ascii=False),

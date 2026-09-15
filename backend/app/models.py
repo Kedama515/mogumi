@@ -1,9 +1,19 @@
 from datetime import date
 
-from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
+
+
+class Household(Base):
+    """データの共有スコープ(世帯)。個人利用時は1ユーザー=1世帯として自動作成する。"""
+
+    __tablename__ = "households"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    created_at = Column(Date, nullable=False, default=date.today)
 
 
 class User(Base):
@@ -12,12 +22,14 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False, unique=True)
     password_hash = Column(String, nullable=False)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
 
 
 class FridgeItem(Base):
     __tablename__ = "fridge_items"
 
     id = Column(Integer, primary_key=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
     name = Column(String, nullable=False)
     added_date = Column(Date, nullable=False, default=date.today)
     memo = Column(String, default="")
@@ -25,9 +37,11 @@ class FridgeItem(Base):
 
 class PantryItem(Base):
     __tablename__ = "pantry_items"
+    __table_args__ = (UniqueConstraint("household_id", "name"),)
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
+    name = Column(String, nullable=False)
     memo = Column(String, default="")
 
 
@@ -35,6 +49,7 @@ class Meal(Base):
     __tablename__ = "meals"
 
     id = Column(Integer, primary_key=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
     date = Column(Date, nullable=False)
     meal_type = Column(String, nullable=False)  # 朝食 / 昼食 / 夕食
     servings = Column(Integer, nullable=False, default=2)
@@ -77,6 +92,7 @@ class Recipe(Base):
     __tablename__ = "recipes"
 
     id = Column(Integer, primary_key=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
     dish_name = Column(String, nullable=False)
     source_url = Column(String, default="")
     ingredients = Column(String, nullable=False)  # JSON-encoded list

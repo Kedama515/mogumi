@@ -6,18 +6,31 @@
 
 ```mermaid
 erDiagram
+    HOUSEHOLDS ||--o{ USERS : "has"
+    HOUSEHOLDS ||--o{ FRIDGE_ITEMS : "owns"
+    HOUSEHOLDS ||--o{ PANTRY_ITEMS : "owns"
+    HOUSEHOLDS ||--o{ MEALS : "owns"
+    HOUSEHOLDS ||--o{ RECIPES : "owns"
     MEALS ||--o{ MEAL_DISHES : "has"
     MEALS ||--o{ MEAL_TAGS : "has"
     RECIPES ||--o{ RECIPE_TAGS : "has"
+
+    HOUSEHOLDS {
+        int id PK
+        string name
+        date created_at
+    }
 
     USERS {
         int id PK
         string username UK
         string password_hash
+        int household_id FK
     }
 
     FRIDGE_ITEMS {
         int id PK
+        int household_id FK
         string name
         date added_date
         string memo
@@ -25,12 +38,14 @@ erDiagram
 
     PANTRY_ITEMS {
         int id PK
-        string name UK
+        int household_id FK
+        string name "household_id+nameでUK"
         string memo
     }
 
     MEALS {
         int id PK
+        int household_id FK
         date date
         string meal_type "朝食 / 昼食 / 夕食"
         int servings
@@ -58,6 +73,7 @@ erDiagram
 
     RECIPES {
         int id PK
+        int household_id FK
         string dish_name
         string source_url
         string ingredients "JSON配列(文字列)"
@@ -75,32 +91,44 @@ erDiagram
 
 ## テーブル詳細
 
+### households(世帯・共有スコープ)
+冷蔵庫・常備品・献立・レシピの「持ち主」の単位。個人利用時も、ユーザー作成時に1人=1世帯を自動作成する(`scripts/create_user.py`)。将来的に家族で共有したくなったら、複数の`users`を同じ`household_id`に束ねるだけでよい設計(2026-09-15〜)。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| id | int (PK) | |
+| name | string | 世帯名(自動生成、例: "aliceの世帯") |
+| created_at | date | |
+
 ### users(ログインユーザー)
-個人利用のみ想定のため、公開の登録エンドポイントはなく`scripts/create_user.py`から作成する。他のテーブルとの直接のリレーションはなく、認証(JWT発行・検証)専用。
+個人利用のみ想定のため、公開の登録エンドポイントはなく`scripts/create_user.py`から作成する。認証(JWT発行・検証)の主体であり、`household_id`を通じて所属する世帯のデータにアクセスする。1ユーザーは1世帯にのみ所属する(複数世帯への同時所属は非対応、必要になれば中間テーブルへの拡張を検討)。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
 | username | string (unique) | |
 | password_hash | string | bcryptハッシュ |
+| household_id | int (FK → households.id) | 所属する世帯 |
 
 ### fridge_items(冷蔵庫の中身)
-今ある食材のみを保持する(消費履歴は残さない)。使い切ったら行ごと削除する運用。
+今ある食材のみを保持する(消費履歴は残さない)。使い切ったら行ごと削除する運用。`household_id`が同じユーザー同士で共有される。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
+| household_id | int (FK → households.id) | |
 | name | string | 食材名 |
 | added_date | date | 追加日 |
 | memo | string | 任意メモ |
 
 ### pantry_items(常備品)
-調味料・乾物など、常にある前提のもの。`name`はユニーク制約あり。
+調味料・乾物など、常にある前提のもの。`(household_id, name)`の組み合わせでユニーク制約(世帯ごとに同名アイテムは1つ)。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
-| name | string (unique) | 常備品名 |
+| household_id | int (FK → households.id) | |
+| name | string | 常備品名 |
 | memo | string | 任意メモ |
 
 ### meals(献立記録)
@@ -109,6 +137,7 @@ erDiagram
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
+| household_id | int (FK → households.id) | |
 | date | date | |
 | meal_type | string | `朝食` / `昼食` / `夕食` |
 | servings | int | 人前 |
@@ -142,6 +171,7 @@ CRUD実装済み(2026-09-14〜)。`dish_name`は`meal_dishes.name`と文字列�
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
+| household_id | int (FK → households.id) | |
 | dish_name | string | 料理名 |
 | source_url | string | 出典URL(あれば) |
 | ingredients | string | 材料リスト(JSON配列を文字列として保存) |

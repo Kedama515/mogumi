@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
+from ..security import get_current_user
 from ..tag_utils import tags_to_schema
 
 router = APIRouter()
@@ -32,17 +33,28 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
 
 
 @router.get("", response_model=list[schemas.MealOut])
-def list_meals(days: int = 7, db: Session = Depends(get_db)):
+def list_meals(
+    days: int = 7,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     since = date.today() - timedelta(days=days)
     meals = db.scalars(
-        select(models.Meal).where(models.Meal.date >= since).order_by(models.Meal.date.desc())
+        select(models.Meal)
+        .where(models.Meal.household_id == current_user.household_id, models.Meal.date >= since)
+        .order_by(models.Meal.date.desc())
     ).all()
     return [_meal_to_out(meal) for meal in meals]
 
 
 @router.post("", response_model=schemas.MealOut, status_code=201)
-def create_meal(meal: schemas.MealIn, db: Session = Depends(get_db)):
+def create_meal(
+    meal: schemas.MealIn,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     db_meal = models.Meal(
+        household_id=current_user.household_id,
         date=meal.date,
         meal_type=meal.meal_type,
         servings=meal.servings,

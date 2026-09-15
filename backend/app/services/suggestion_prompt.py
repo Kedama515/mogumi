@@ -8,17 +8,24 @@ from .. import models
 
 def build_prompt(
     db: Session,
+    household_id: int,
     meal_type: str,
     servings: int,
     user_request: str,
     lookback_days: int,
 ) -> str:
-    fridge = db.scalars(select(models.FridgeItem)).all()
-    pantry = db.scalars(select(models.PantryItem)).all()
+    fridge = db.scalars(
+        select(models.FridgeItem).where(models.FridgeItem.household_id == household_id)
+    ).all()
+    pantry = db.scalars(
+        select(models.PantryItem).where(models.PantryItem.household_id == household_id)
+    ).all()
 
     since = date.today() - timedelta(days=lookback_days)
     recent_meals = db.scalars(
-        select(models.Meal).where(models.Meal.date >= since).order_by(models.Meal.date.desc())
+        select(models.Meal)
+        .where(models.Meal.household_id == household_id, models.Meal.date >= since)
+        .order_by(models.Meal.date.desc())
     ).all()
 
     fridge_lines = "\n".join(f"- {i.name}" for i in fridge) or "(なし)"

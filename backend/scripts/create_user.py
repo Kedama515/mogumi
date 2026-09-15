@@ -3,6 +3,10 @@
 公開の登録エンドポイントは用意していない(個人利用のみ想定のため)。
 ユーザー追加・パスワード変更はこのスクリプトから行う。
 
+新規ユーザーには専用のhousehold(世帯)を自動作成して紐付ける。既存の
+householdに参加させたい場合(家族で共有したい場合)は、まだ専用の招待
+フローがないため、DBを直接操作するか別途スクリプトを用意すること。
+
 実行方法(backend/ ディレクトリから):
 
     python3 -m scripts.create_user
@@ -42,8 +46,17 @@ def main() -> None:
             user.password_hash = hash_password(password)
             print(f"updated password for existing user: {username}")
         else:
-            db.add(models.User(username=username, password_hash=hash_password(password)))
-            print(f"created user: {username}")
+            household = models.Household(name=f"{username}の世帯")
+            db.add(household)
+            db.flush()  # household.id を確定させる
+            db.add(
+                models.User(
+                    username=username,
+                    password_hash=hash_password(password),
+                    household_id=household.id,
+                )
+            )
+            print(f"created user: {username} (household: {household.name})")
         db.commit()
     finally:
         db.close()

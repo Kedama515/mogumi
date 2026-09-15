@@ -23,8 +23,6 @@ erDiagram
         int id PK
         string name
         date created_at
-        int default_servings "献立設定のデフォルト人数"
-        int default_lookback_days "献立設定のデフォルト被り回避日数"
     }
 
     USERS {
@@ -32,6 +30,8 @@ erDiagram
         string username UK
         string password_hash
         int household_id FK
+        int default_servings "献立設定のデフォルト人数(個人設定)"
+        int default_lookback_days "献立設定のデフォルト被り回避日数(個人設定)"
     }
 
     FRIDGE_ITEMS {
@@ -133,20 +133,18 @@ erDiagram
 ## テーブル詳細
 
 ### households(世帯・共有スコープ)
-冷蔵庫・常備品・献立・レシピの「持ち主」の単位。個人利用時も、ユーザー作成時に1人=1世帯を自動作成する(`scripts/create_user.py`)。将来的に家族で共有したくなったら、複数の`users`を同じ`household_id`に束ねるだけでよい設計(2026-09-15〜)。
-
-`default_servings`/`default_lookback_days`は献立提案フォームで毎回入力しなくていいように持たせた「献立設定」のデフォルト値(2026-09-15〜)。設定画面では個人設定ではなく「世帯の設定」として見せる(人数は世帯単位の事実に近いため)。`GET/PUT /api/household/settings`で参照・更新する。献立提案フォームでは普段はこの値をそのまま使い、必要な時だけ展開して今回だけ上書きできる。
+冷蔵庫・常備品・献立・レシピの「持ち主」の単位。個人利用時も、ユーザー作成時に1人=1世帯を自動作成する(`scripts/create_user.py`)。将来的に家族で共有したくなったら、複数の`users`を同じ`household_id`に束ねるだけでよい設計(2026-09-15〜)。「世帯」は冷蔵庫・パントリー・レシピ・献立記録など**実際に共有される在庫・記録**のみを指すスコープと位置づける(2026-09-15〜、下記`users.default_servings`等の経緯を参照)。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
 | name | string | 世帯名(自動生成、例: "aliceの世帯") |
 | created_at | date | |
-| default_servings | int | 献立提案のデフォルト人数(既定値2) |
-| default_lookback_days | int | 献立提案のデフォルト被り回避参照日数(既定値3) |
 
 ### users(ログインユーザー)
 個人利用のみ想定のため、公開の登録エンドポイントはなく`scripts/create_user.py`から作成する。認証(JWT発行・検証)の主体であり、`household_id`を通じて所属する世帯のデータにアクセスする。1ユーザーは1世帯にのみ所属する(複数世帯への同時所属は非対応、必要になれば中間テーブルへの拡張を検討)。
+
+`default_servings`/`default_lookback_days`は献立提案フォームで毎回入力しなくていいように持たせた「個人設定」のデフォルト値。`GET/PUT /api/settings`で参照・更新する。献立提案フォームでは普段はこの値をそのまま使い、必要な時だけ展開して今回だけ上書きできる。当初`households`に持たせていたが(2026-09-15の初期実装)、「被り回避の許容度は明確に個人差がある(小松菜のおひたし連発への不満は個人の体感)」「人数も現状は世帯=1ユーザーなので個人設定で困らない」という指摘から`users`に移動した(同日中に再設計)。「世帯」の概念は実際に共有される在庫・記録に限定し、個人の好みは`users`に置く、という一貫した整理。
 
 | カラム | 型 | 説明 |
 |---|---|---|
@@ -154,6 +152,8 @@ erDiagram
 | username | string (unique) | |
 | password_hash | string | bcryptハッシュ |
 | household_id | int (FK → households.id) | 所属する世帯 |
+| default_servings | int | 献立提案のデフォルト人数(既定値2) |
+| default_lookback_days | int | 献立提案のデフォルト被り回避参照日数(既定値3) |
 
 ### fridge_items(冷蔵庫の中身)
 今ある食材のみを保持する(消費履歴は残さない)。使い切ったら行ごと削除する運用。`household_id`が同じユーザー同士で共有される。`category`は追加時に`ingredient_categories`/`ingredient_aliases`を引いて自動設定する(2026-09-15〜、画面でカテゴリごとにグルーピング表示するため)。

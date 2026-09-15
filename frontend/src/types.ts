@@ -35,7 +35,7 @@ export interface MealDish {
   ingredients: string[]
 }
 
-export interface HouseholdSettings {
+export interface UserSettings {
   default_servings: number
   default_lookback_days: number
 }

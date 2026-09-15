@@ -18,7 +18,7 @@ export function SuggestPage() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   useEffect(() => {
-    api.getHouseholdSettings().then((settings) => {
+    api.getSettings().then((settings) => {
       setForm((f) => ({
         ...f,
         servings: settings.default_servings,
@@ -94,7 +94,7 @@ export function SuggestPage() {
           onClick={() => setOverrideOpen((v) => !v)}
         >
           <span className="fridge-group-arrow">{overrideOpen ? '▼' : '▶'}</span>
-          今回だけ人数・被り回避日数を変更(普段は世帯の設定を使用)
+          今回だけ人数・被り回避日数を変更(普段は個人設定を使用)
         </button>
         {overrideOpen && (
           <div className="field-row">

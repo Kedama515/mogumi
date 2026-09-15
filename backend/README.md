@@ -33,7 +33,7 @@ DBのテーブル定義・ER図は [`docs/data-model.md`](docs/data-model.md) �
 - `GET/POST/DELETE /api/pantry` — 常備品。冷蔵庫と同じマスターで`category`(調味料/油/乾物・缶詰など)を自動判定して付与する
 - `GET/POST /api/meals` — 献立記録(取得は`days`で直近N日分、または`year`+`month`でその月1ヶ月分。新規記録)。栄養・材料費は献立(1人前)単位で持つ。品目(`menu`)は名前+`role`(主菜/副菜など)+`recipe_id`(名前完全一致で自動リンク、任意)+`ingredients`(使用食材名のリスト)を持つ。`genre`(カレー/丼など)は品目作成時に料理名から自動判定して付与する(`docs/data-model.md`の`dish_genres`参照)
 - `GET/POST/DELETE /api/recipes`, `GET /api/recipes/{id}` — お気に入りレシピ(材料・手順・タグ)
-- `GET/PUT /api/household/settings` — 献立設定(人数・被り回避の参照日数のデフォルト値)。世帯単位で共有される
+- `GET/PUT /api/settings` — 献立設定(人数・被り回避の参照日数のデフォルト値)。個人設定(ログインユーザーごと)
 - `POST /api/suggestions` — 献立提案。冷蔵庫・常備品・直近N日の献立(タグ含む)を踏まえて、Claude APIに複数品の献立+調理タイムライン+各品目の使用食材を提案させる。返ってきた提案が気に入ったら `POST /api/meals` で記録する想定(提案自体はDBに保存しない)。呼び出すたびに使用トークン数と概算費用(USD)をサーバーの標準出力にログする(`app/services/claude_client.py`の料金表は手動更新、モデルを変えたら追記すること)
 
 ## 既存データの移行

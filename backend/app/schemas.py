@@ -39,7 +39,7 @@ class PantryItemOut(BaseModel):
     memo: str = ""
 
 
-class HouseholdSettings(BaseModel):
+class UserSettings(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     default_servings: int = 2

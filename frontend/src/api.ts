@@ -1,11 +1,11 @@
 import type {
   FridgeItem,
-  HouseholdSettings,
   Meal,
   PantryItem,
   Recipe,
   SuggestionRequest,
   SuggestionResponse,
+  UserSettings,
 } from './types'
 
 const TOKEN_KEY = 'mogumi_token'
@@ -113,9 +113,9 @@ export const api = {
     return result
   },
 
-  getHouseholdSettings: () => request<HouseholdSettings>('/household/settings'),
-  updateHouseholdSettings: (settings: HouseholdSettings) =>
-    request<HouseholdSettings>('/household/settings', {
+  getSettings: () => request<UserSettings>('/settings'),
+  updateSettings: (settings: UserSettings) =>
+    request<UserSettings>('/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     }),

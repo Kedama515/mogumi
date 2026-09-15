@@ -15,10 +15,6 @@ class Household(Base):
     name = Column(String, nullable=False)
     created_at = Column(Date, nullable=False, default=date.today)
 
-    # 献立設定(世帯で共有するデフォルト値)。設定画面では「世帯の設定」として見せる
-    default_servings = Column(Integer, nullable=False, default=2)
-    default_lookback_days = Column(Integer, nullable=False, default=3)
-
 
 class User(Base):
     __tablename__ = "users"
@@ -27,6 +23,12 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)
     password_hash = Column(String, nullable=False)
     household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
+
+    # 献立設定(個人の好み)。人数は世帯の事実に近いが、被り回避の許容度は明確に個人差があり、
+    # 世帯=1ユーザーの現状ではどちらも個人設定に寄せておく方が素直(2026-09-15〜)。
+    # 「世帯」は冷蔵庫・パントリー・レシピ・献立記録など実際に共有される在庫・記録のみを指す。
+    default_servings = Column(Integer, nullable=False, default=2)
+    default_lookback_days = Column(Integer, nullable=False, default=3)
 
 
 class FridgeItem(Base):

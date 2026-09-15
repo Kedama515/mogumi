@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
-import type { HouseholdSettings } from '../types'
+import type { UserSettings } from '../types'
 
 const APP_VERSION = '0.1.0'
 
@@ -21,18 +21,18 @@ export function SettingsPage({
   onLogout: () => void
   onBack: () => void
 }) {
-  const [settings, setSettings] = useState<HouseholdSettings | null>(null)
+  const [settings, setSettings] = useState<UserSettings | null>(null)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   useEffect(() => {
-    api.getHouseholdSettings().then(setSettings)
+    api.getSettings().then(setSettings)
   }, [])
 
   async function handleSave() {
     if (!settings) return
     setSaveState('saving')
     try {
-      const updated = await api.updateHouseholdSettings(settings)
+      const updated = await api.updateSettings(settings)
       setSettings(updated)
       setSaveState('saved')
     } catch {
@@ -47,8 +47,8 @@ export function SettingsPage({
       </button>
 
       <div className="card">
-        <h3>世帯の設定</h3>
-        <p className="muted">献立作成のたびに入力しなくていいように、この世帯で使うデフォルト値をここで管理します。</p>
+        <h3>個人設定</h3>
+        <p className="muted">献立作成のたびに入力しなくていいように、普段使うデフォルト値をここで管理します。</p>
         {settings && (
           <div className="field-row">
             <label>

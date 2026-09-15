@@ -14,6 +14,7 @@ erDiagram
     MEALS ||--o{ MEAL_DISHES : "has"
     MEALS ||--o{ MEAL_TAGS : "has"
     RECIPES ||--o{ RECIPE_TAGS : "has"
+    RECIPES |o--o{ MEAL_DISHES : "used in (任意)"
     INGREDIENT_CATEGORIES ||--o{ INGREDIENT_ALIASES : "has"
 
     HOUSEHOLDS {
@@ -77,6 +78,8 @@ erDiagram
         int id PK
         int meal_id FK
         string name
+        string role "主菜/副菜/汁物/主食 など、任意"
+        int recipe_id FK "対応するお気に入りレシピ、任意"
     }
 
     MEAL_TAGS {
@@ -178,13 +181,17 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 | cost_yen_per_serving | float | 1人前あたりの材料費概算 |
 
 ### meal_dishes(献立を構成する品目)
-`meals`に対する1:N。品目は名前のみ(栄養価は持たない)。
+`meals`に対する1:N。品目自体は栄養価を持たない(栄養・材料費は`meals`側で献立1人前単位のみ、品目ごとの内訳は意図的に持たない設計 — 過去に品目ごとの栄養値を持たせて手戻りした経緯があり、実際の運用(標準的な食品成分値からの概算を献立単位で行う)に合わせている)。
+
+`role`(主菜/副菜/汁物など)は献立提案(`POST /api/suggestions`)が生成した値をそのまま保存する(2026-09-15〜、以前は記録時に捨てていた)。`recipe_id`は`recipes.dish_name`と名前が完全一致する場合にベストエフォートで自動リンクする(手動指定も可)。名前の言い回しが違うと一致しないため、リンクされないケースは残る。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
 | meal_id | int (FK → meals.id) | |
 | name | string | 料理名 |
+| role | string (nullable) | `主菜`/`副菜`/`汁物`/`主食` など。提案由来でない場合はNoneもあり得る |
+| recipe_id | int (FK → recipes.id, nullable) | 対応するお気に入りレシピ(名前完全一致で自動リンク、なければNone) |
 
 ### meal_tags(献立のタグ)
 `meals`に対する1:N。1つの献立が複数カテゴリ・複数値のタグを持てる(例: `protein`に`豚肉`と`卵`の両方)。語彙は[`ai-project/menu/data/tags.json`](../../menu/data/tags.json)を踏襲。

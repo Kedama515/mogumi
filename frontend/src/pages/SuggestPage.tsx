@@ -42,7 +42,7 @@ export function SuggestPage() {
         servings: form.servings,
         estimated: true,
         memo: result.reasoning,
-        menu: result.dishes.map((d) => d.name),
+        menu: result.dishes.map((d) => ({ name: d.name, role: d.role, recipe_id: null })),
         nutrition_per_serving: result.nutrition_per_serving,
         cost_yen_per_serving: result.estimated_cost_yen_per_serving,
         tags: result.tags,

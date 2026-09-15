@@ -44,7 +44,15 @@ export function HistoryPage() {
                 </strong>
                 <span className="muted">{meal.servings}人前</span>
               </div>
-              <div>{meal.menu.join(' / ')}</div>
+              <div>
+                {meal.menu.map((dish, i) => (
+                  <span key={i}>
+                    {dish.role && <span className="dish-role">{dish.role}</span>}
+                    {dish.name}
+                    {i < meal.menu.length - 1 && ' / '}
+                  </span>
+                ))}
+              </div>
               <div className="nutrition-row">
                 <span>{meal.nutrition_per_serving.calories_kcal ?? '-'} kcal</span>
                 <span>たんぱく質 {meal.nutrition_per_serving.protein_g ?? '-'} g</span>

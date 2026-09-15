@@ -84,7 +84,18 @@ def migrate_meals(db, household_id: int, json_path: Path) -> int:
             cost_yen_per_serving=meal.get("cost_yen_per_serving"),
         )
         for dish_name in meal.get("menu", []):
-            db_meal.dishes.append(models.MealDish(name=dish_name))
+            # 名前が完全一致するお気に入りレシピがあれば自動でリンクする(ベストエフォート)
+            matched = (
+                db.query(models.Recipe)
+                .filter(
+                    models.Recipe.household_id == household_id,
+                    models.Recipe.dish_name == dish_name,
+                )
+                .first()
+            )
+            db_meal.dishes.append(
+                models.MealDish(name=dish_name, recipe_id=matched.id if matched else None)
+            )
         for category, values in (meal.get("tags") or {}).items():
             for value in values:
                 db_meal.tags.append(models.MealTag(category=category, value=value))

@@ -53,13 +53,25 @@ class NutritionPerServing(BaseModel):
     carb_g: Optional[float] = None
 
 
+class MealDishIn(BaseModel):
+    name: str
+    role: Optional[str] = None
+    recipe_id: Optional[int] = None
+
+
+class MealDishOut(BaseModel):
+    name: str
+    role: Optional[str] = None
+    recipe_id: Optional[int] = None
+
+
 class MealIn(BaseModel):
     date: date
     meal_type: str
     servings: int = 2
     estimated: bool = True
     memo: str = ""
-    menu: list[str]
+    menu: list[MealDishIn]
     nutrition_per_serving: NutritionPerServing = NutritionPerServing()
     cost_yen_per_serving: Optional[float] = None
     tags: Tags = Tags()
@@ -72,7 +84,7 @@ class MealOut(BaseModel):
     servings: int
     estimated: bool
     memo: str = ""
-    menu: list[str]
+    menu: list[MealDishOut]
     nutrition_per_serving: NutritionPerServing
     cost_yen_per_serving: Optional[float] = None
     tags: Tags

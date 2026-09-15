@@ -20,7 +20,10 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
         servings=meal.servings,
         estimated=meal.estimated,
         memo=meal.memo or "",
-        menu=[dish.name for dish in meal.dishes],
+        menu=[
+            schemas.MealDishOut(name=dish.name, role=dish.role, recipe_id=dish.recipe_id)
+            for dish in meal.dishes
+        ],
         nutrition_per_serving=schemas.NutritionPerServing(
             calories_kcal=meal.calories_kcal,
             protein_g=meal.protein_g,
@@ -66,8 +69,20 @@ def create_meal(
         carb_g=meal.nutrition_per_serving.carb_g,
         cost_yen_per_serving=meal.cost_yen_per_serving,
     )
-    for name in meal.menu:
-        db_meal.dishes.append(models.MealDish(name=name))
+    for dish in meal.menu:
+        recipe_id = dish.recipe_id
+        if recipe_id is None:
+            # 名前が完全一致するお気に入りレシピがあれば自動でリンクする(ベストエフォート)
+            matched = (
+                db.query(models.Recipe)
+                .filter(
+                    models.Recipe.household_id == current_user.household_id,
+                    models.Recipe.dish_name == dish.name,
+                )
+                .first()
+            )
+            recipe_id = matched.id if matched else None
+        db_meal.dishes.append(models.MealDish(name=dish.name, role=dish.role, recipe_id=recipe_id))
     for category, values in meal.tags.model_dump().items():
         for value in values:
             db_meal.tags.append(models.MealTag(category=category, value=value))

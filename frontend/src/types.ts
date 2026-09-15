@@ -27,6 +27,12 @@ export interface NutritionPerServing {
   carb_g: number | null
 }
 
+export interface MealDish {
+  name: string
+  role: string | null
+  recipe_id: number | null
+}
+
 export interface Meal {
   id: number
   date: string
@@ -34,7 +40,7 @@ export interface Meal {
   servings: number
   estimated: boolean
   memo: string
-  menu: string[]
+  menu: MealDish[]
   nutrition_per_serving: NutritionPerServing
   cost_yen_per_serving: number | null
   tags: Tags

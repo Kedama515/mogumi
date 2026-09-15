@@ -101,6 +101,8 @@ class MealDish(Base):
     id = Column(Integer, primary_key=True)
     meal_id = Column(Integer, ForeignKey("meals.id"), nullable=False)
     name = Column(String, nullable=False)
+    role = Column(String)  # 主菜/副菜/汁物/主食 など。提案由来でない場合はNoneもあり得る
+    recipe_id = Column(Integer, ForeignKey("recipes.id"))  # 対応するお気に入りレシピ(あれば)
 
     meal = relationship("Meal", back_populates="dishes")
 

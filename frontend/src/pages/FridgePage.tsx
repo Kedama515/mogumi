@@ -1,27 +1,13 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { CategoryAccordion } from '../components/CategoryAccordion'
 import type { FridgeItem } from '../types'
-
-const CATEGORY_ORDER = ['野菜', '肉', '魚介', '卵・乳製品', '主食', '果物', 'その他']
-
-function groupByCategory(items: FridgeItem[]): [string, FridgeItem[]][] {
-  const groups = new Map<string, FridgeItem[]>()
-  for (const item of items) {
-    const list = groups.get(item.category) ?? []
-    list.push(item)
-    groups.set(item.category, list)
-  }
-  const known = CATEGORY_ORDER.filter((c) => groups.has(c))
-  const unknown = [...groups.keys()].filter((c) => !CATEGORY_ORDER.includes(c))
-  return [...known, ...unknown].map((c) => [c, groups.get(c)!])
-}
 
 export function FridgePage() {
   const [items, setItems] = useState<FridgeItem[]>([])
   const [name, setName] = useState('')
   const [memo, setMemo] = useState('')
   const [loading, setLoading] = useState(true)
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   async function reload() {
     setItems(await api.listFridge())
@@ -45,10 +31,6 @@ export function FridgePage() {
     await reload()
   }
 
-  function toggleGroup(category: string) {
-    setCollapsed((prev) => ({ ...prev, [category]: !prev[category] }))
-  }
-
   return (
     <div className="page">
       <form className="card inline-form" onSubmit={handleAdd}>
@@ -62,33 +44,21 @@ export function FridgePage() {
       ) : items.length === 0 ? (
         <p>冷蔵庫は空です。</p>
       ) : (
-        groupByCategory(items).map(([category, categoryItems]) => {
-          const isCollapsed = Boolean(collapsed[category])
-          return (
-            <div key={category} className="fridge-group">
-              <button className="fridge-group-title" onClick={() => toggleGroup(category)}>
-                <span className="fridge-group-arrow">{isCollapsed ? '▶' : '▼'}</span>
-                {category} <span className="muted">({categoryItems.length})</span>
+        <CategoryAccordion
+          items={items}
+          renderItem={(item) => (
+            <li key={item.id} className="card">
+              <div>
+                <strong>{item.name}</strong>
+                <span className="muted"> 追加日: {item.added_date}</span>
+                {item.memo && <div className="muted">{item.memo}</div>}
+              </div>
+              <button className="ghost" onClick={() => handleDelete(item.id)}>
+                削除
               </button>
-              {!isCollapsed && (
-                <ul className="item-list">
-                  {categoryItems.map((item) => (
-                    <li key={item.id} className="card">
-                      <div>
-                        <strong>{item.name}</strong>
-                        <span className="muted"> 追加日: {item.added_date}</span>
-                        {item.memo && <div className="muted">{item.memo}</div>}
-                      </div>
-                      <button className="ghost" onClick={() => handleDelete(item.id)}>
-                        削除
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )
-        })
+            </li>
+          )}
+        />
       )}
     </div>
   )

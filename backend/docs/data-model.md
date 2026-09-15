@@ -33,7 +33,7 @@ erDiagram
         int id PK
         int household_id FK
         string name
-        string category "野菜/肉/魚介/卵・乳製品/主食/果物/その他"
+        string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/その他"
         date added_date
         string memo
     }
@@ -54,6 +54,7 @@ erDiagram
         int id PK
         int household_id FK
         string name "household_id+nameでUK"
+        string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/その他"
         string memo
     }
 
@@ -132,18 +133,18 @@ erDiagram
 | id | int (PK) | |
 | household_id | int (FK → households.id) | |
 | name | string | 食材名(ユーザーが入力した表記そのまま) |
-| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`その他` |
+| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`その他` |
 | added_date | date | 追加日 |
 | memo | string | 任意メモ |
 
 ### ingredient_categories(食材の分類マスター)・ingredient_aliases(表記揺れ)
-household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`人参`など表記揺れのある食材名を、正規化名1つに対する複数のエイリアスとして持つ。冷蔵庫に食材を追加する際、まず`ingredient_aliases.alias`を完全一致で検索し、無ければClaude(Haiku、`app/services/ingredient_categorizer.py`)に1回だけ分類させて結果をここにキャッシュする。よく使う食材はあらかじめ`SEED_INGREDIENTS`(同ファイル)で登録済み。
+household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`人参`など表記揺れのある食材名を、正規化名1つに対する複数のエイリアスとして持つ。冷蔵庫・常備品どちらに食材/食品を追加する際も、まず`ingredient_aliases.alias`を完全一致で検索し、無ければClaude(Haiku、`app/services/ingredient_categorizer.py`)に1回だけ分類させて結果をここにキャッシュする。よく使う食材・調味料はあらかじめ`SEED_INGREDIENTS`(同ファイル)で登録済み。
 
 | テーブル | カラム | 型 | 説明 |
 |---|---|---|---|
 | ingredient_categories | id | int (PK) | |
 | ingredient_categories | canonical_name | string (unique) | 正規化された食材名(基本ひらがな) |
-| ingredient_categories | category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`その他` |
+| ingredient_categories | category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`その他` |
 | ingredient_aliases | id | int (PK) | |
 | ingredient_aliases | alias | string (unique) | 表記揺れを含む実際の食材名 |
 | ingredient_aliases | ingredient_id | int (FK → ingredient_categories.id) | |
@@ -151,13 +152,14 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 注意: 全く新規の同義語同士(例: 種データにない「パクチー」と「香菜」)は、それぞれ独立してLLM分類されるため、正規化名の表記(ひらがな/カタカナ)がずれて別エントリになることがある。カテゴリ自体は毎回正しく判定されるため実用上の問題は小さいが、完全な名寄せは保証しない。
 
 ### pantry_items(常備品)
-調味料・乾物など、常にある前提のもの。`(household_id, name)`の組み合わせでユニーク制約(世帯ごとに同名アイテムは1つ)。
+調味料・乾物など、常にある前提のもの。`(household_id, name)`の組み合わせでユニーク制約(世帯ごとに同名アイテムは1つ)。`category`はfridge_itemsと同じ`ingredient_categories`/`ingredient_aliases`マスターを共有して自動設定する(2026-09-15〜)。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
 | household_id | int (FK → households.id) | |
 | name | string | 常備品名 |
+| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`その他` |
 | memo | string | 任意メモ |
 
 ### meals(献立記録)

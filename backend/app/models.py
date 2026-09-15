@@ -69,6 +69,7 @@ class PantryItem(Base):
     id = Column(Integer, primary_key=True)
     household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
     name = Column(String, nullable=False)
+    category = Column(String, nullable=False, default="その他")
     memo = Column(String, default="")
 
 

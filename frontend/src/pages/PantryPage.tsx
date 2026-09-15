@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { CategoryAccordion } from '../components/CategoryAccordion'
 import type { PantryItem } from '../types'
 
 export function PantryPage() {
@@ -43,8 +44,9 @@ export function PantryPage() {
       ) : items.length === 0 ? (
         <p>常備品が登録されていません。</p>
       ) : (
-        <ul className="item-list">
-          {items.map((item) => (
+        <CategoryAccordion
+          items={items}
+          renderItem={(item) => (
             <li key={item.id} className="card">
               <div>
                 <strong>{item.name}</strong>
@@ -54,8 +56,8 @@ export function PantryPage() {
                 削除
               </button>
             </li>
-          ))}
-        </ul>
+          )}
+        />
       )}
     </div>
   )

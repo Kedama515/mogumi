@@ -35,6 +35,7 @@ class PantryItemOut(BaseModel):
 
     id: int
     name: str
+    category: str
     memo: str = ""
 
 

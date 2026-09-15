@@ -51,9 +51,13 @@ def migrate_pantry(db, household_id: int, csv_path: Path) -> int:
     count = 0
     with csv_path.open(encoding="utf-8") as f:
         for row in csv.DictReader(f):
+            name = row["食材"]
             db.add(
                 models.PantryItem(
-                    household_id=household_id, name=row["食材"], memo=row.get("メモ") or ""
+                    household_id=household_id,
+                    name=name,
+                    category=resolve_category(db, name),
+                    memo=row.get("メモ") or "",
                 )
             )
             count += 1

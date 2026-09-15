@@ -9,6 +9,7 @@ export interface FridgeItem {
 export interface PantryItem {
   id: number
   name: string
+  category: string
   memo: string
 }
 

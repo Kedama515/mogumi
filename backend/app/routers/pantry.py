@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..security import get_current_user
+from ..services.ingredient_categorizer import resolve_category
 
 router = APIRouter()
 
@@ -15,7 +16,7 @@ def list_pantry_items(
     return (
         db.query(models.PantryItem)
         .filter(models.PantryItem.household_id == current_user.household_id)
-        .order_by(models.PantryItem.name)
+        .order_by(models.PantryItem.category, models.PantryItem.name)
         .all()
     )
 
@@ -27,7 +28,10 @@ def add_pantry_item(
     current_user: models.User = Depends(get_current_user),
 ):
     db_item = models.PantryItem(
-        household_id=current_user.household_id, name=item.name, memo=item.memo
+        household_id=current_user.household_id,
+        name=item.name,
+        category=resolve_category(db, item.name),
+        memo=item.memo,
     )
     db.add(db_item)
     db.commit()

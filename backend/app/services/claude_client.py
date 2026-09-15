@@ -127,6 +127,10 @@ def propose_menu(prompt: str) -> tuple[dict, dict]:
 
 CLASSIFY_INGREDIENT_MODEL = "claude-haiku-4-5"
 
+# 冷蔵庫・パントリー共通の食材/食品カテゴリ語彙。
+# frontend/src/pages/FridgePage.tsx, PantryPage.tsx の CATEGORY_ORDER と揃えること。
+CATEGORY_VOCAB = ["野菜", "肉", "魚介", "卵・乳製品", "主食", "果物", "調味料", "油", "乾物・缶詰", "その他"]
+
 CLASSIFY_INGREDIENT_TOOL = {
     "name": "classify_ingredient",
     "description": "食材名を分類し、表記揺れ(カタカナ/漢字/送り仮名など)を吸収した正規化名を返す",
@@ -139,7 +143,7 @@ CLASSIFY_INGREDIENT_TOOL = {
             },
             "category": {
                 "type": "string",
-                "enum": ["野菜", "肉", "魚介", "卵・乳製品", "主食", "果物", "その他"],
+                "enum": CATEGORY_VOCAB,
             },
         },
         "required": ["canonical_name", "category"],

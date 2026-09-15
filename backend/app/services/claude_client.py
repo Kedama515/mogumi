@@ -26,8 +26,13 @@ MENU_PROPOSAL_TOOL = {
                     "properties": {
                         "name": {"type": "string"},
                         "role": {"type": "string", "description": "主菜/副菜/汁物 など"},
+                        "ingredients": {
+                            "type": "array",
+                            "description": "この品目で使う食材名のリスト(分量や切り方は不要、名前のみ)",
+                            "items": {"type": "string"},
+                        },
                     },
-                    "required": ["name", "role"],
+                    "required": ["name", "role", "ingredients"],
                 },
             },
             "timeline": {
@@ -168,3 +173,65 @@ def classify_ingredient(name: str) -> dict:
         if block.type == "tool_use" and block.name == "classify_ingredient":
             return block.input
     raise RuntimeError("Claude did not return a classify_ingredient tool call")
+
+
+CLASSIFY_DISH_GENRE_MODEL = "claude-haiku-4-5"
+
+# 料理のジャンル語彙。献立の被り回避判定(#24)で「カレーが続いている」等を検出するのに使う。
+DISH_GENRE_VOCAB = [
+    "カレー",
+    "丼",
+    "シチュー",
+    "鍋",
+    "汁物・スープ",
+    "麺類",
+    "炒め物",
+    "揚げ物",
+    "焼き物",
+    "煮物",
+    "サラダ",
+    "ご飯もの",
+    "パスタ",
+    "グラタン・オーブン料理",
+    "蒸し料理",
+    "その他",
+]
+
+CLASSIFY_DISH_GENRE_TOOL = {
+    "name": "classify_dish_genre",
+    "description": "料理名を分類し、表記揺れを吸収した正規化名とざっくりしたジャンルを返す",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "canonical_name": {
+                "type": "string",
+                "description": "表記揺れを吸収した正規化名(基本はそのままの料理名でよいが、余計な修飾語は削る)",
+            },
+            "genre": {
+                "type": "string",
+                "enum": DISH_GENRE_VOCAB,
+                "description": "キーマカレー/バターチキンカレー/ほうれん草カレーは全て「カレー」のように、大きなくくりで分類する",
+            },
+        },
+        "required": ["canonical_name", "genre"],
+    },
+}
+
+
+def classify_dish_genre(dish_name: str) -> dict:
+    """未知の料理名をLLMで1回だけジャンル分類する(呼び出し側でマスターにキャッシュする想定)。"""
+    client = get_client()
+    response = client.messages.create(
+        model=CLASSIFY_DISH_GENRE_MODEL,
+        max_tokens=256,
+        tools=[CLASSIFY_DISH_GENRE_TOOL],
+        tool_choice={"type": "tool", "name": "classify_dish_genre"},
+        messages=[{"role": "user", "content": f"次の料理名をジャンル分類してください: {dish_name}"}],
+    )
+    usage = response.usage
+    cost_usd = _cost_usd(usage, CLASSIFY_DISH_GENRE_MODEL)
+    _print_usage(usage, cost_usd, label="料理ジャンル分類API使用量")
+    for block in response.content:
+        if block.type == "tool_use" and block.name == "classify_dish_genre":
+            return block.input
+    raise RuntimeError("Claude did not return a classify_dish_genre tool call")

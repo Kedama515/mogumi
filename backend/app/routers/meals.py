@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..security import get_current_user
+from ..services.dish_genre_classifier import resolve_genre
 from ..tag_utils import tags_to_schema
 
 router = APIRouter()
@@ -23,7 +24,13 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
         estimated=meal.estimated,
         memo=meal.memo or "",
         menu=[
-            schemas.MealDishOut(name=dish.name, role=dish.role, recipe_id=dish.recipe_id)
+            schemas.MealDishOut(
+                name=dish.name,
+                role=dish.role,
+                recipe_id=dish.recipe_id,
+                genre=dish.genre,
+                ingredients=[i.name for i in dish.ingredients],
+            )
             for dish in meal.dishes
         ],
         nutrition_per_serving=schemas.NutritionPerServing(
@@ -92,7 +99,16 @@ def create_meal(
                 .first()
             )
             recipe_id = matched.id if matched else None
-        db_meal.dishes.append(models.MealDish(name=dish.name, role=dish.role, recipe_id=recipe_id))
+        db_dish = models.MealDish(
+            name=dish.name,
+            role=dish.role,
+            recipe_id=recipe_id,
+            genre=resolve_genre(db, dish.name),
+        )
+        db_dish.ingredients = [
+            models.MealDishIngredient(name=name) for name in dish.ingredients
+        ]
+        db_meal.dishes.append(db_dish)
     for category, values in meal.tags.model_dump().items():
         for value in values:
             db_meal.tags.append(models.MealTag(category=category, value=value))

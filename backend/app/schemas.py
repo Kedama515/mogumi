@@ -39,6 +39,13 @@ class PantryItemOut(BaseModel):
     memo: str = ""
 
 
+class HouseholdSettings(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    default_servings: int = 2
+    default_lookback_days: int = 3
+
+
 class Tags(BaseModel):
     protein: list[str] = []
     cuisine: list[str] = []
@@ -57,12 +64,15 @@ class MealDishIn(BaseModel):
     name: str
     role: Optional[str] = None
     recipe_id: Optional[int] = None
+    ingredients: list[str] = []
 
 
 class MealDishOut(BaseModel):
     name: str
     role: Optional[str] = None
     recipe_id: Optional[int] = None
+    genre: Optional[str] = None
+    ingredients: list[str] = []
 
 
 class MealIn(BaseModel):
@@ -100,6 +110,7 @@ class SuggestionRequest(BaseModel):
 class SuggestedDish(BaseModel):
     name: str
     role: str
+    ingredients: list[str] = []
 
 
 class TimelineStep(BaseModel):

@@ -31,6 +31,13 @@ export interface MealDish {
   name: string
   role: string | null
   recipe_id: number | null
+  genre: string | null
+  ingredients: string[]
+}
+
+export interface HouseholdSettings {
+  default_servings: number
+  default_lookback_days: number
 }
 
 export interface Meal {
@@ -56,6 +63,7 @@ export interface SuggestionRequest {
 export interface SuggestedDish {
   name: string
   role: string
+  ingredients: string[]
 }
 
 export interface TimelineStep {

@@ -1,5 +1,6 @@
 import type {
   FridgeItem,
+  HouseholdSettings,
   Meal,
   PantryItem,
   Recipe,
@@ -111,6 +112,13 @@ export const api = {
     }
     return result
   },
+
+  getHouseholdSettings: () => request<HouseholdSettings>('/household/settings'),
+  updateHouseholdSettings: (settings: HouseholdSettings) =>
+    request<HouseholdSettings>('/household/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    }),
 
   listRecipes: () => request<Recipe[]>('/recipes'),
   createRecipe: (recipe: Omit<Recipe, 'id'>) =>

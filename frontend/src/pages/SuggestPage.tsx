@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api'
 import type { Meal, SuggestionRequest, SuggestionResponse } from '../types'
 
@@ -11,10 +11,21 @@ export function SuggestPage() {
     user_request: '',
     lookback_days: 3,
   })
+  const [overrideOpen, setOverrideOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SuggestionResponse | null>(null)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  useEffect(() => {
+    api.getHouseholdSettings().then((settings) => {
+      setForm((f) => ({
+        ...f,
+        servings: settings.default_servings,
+        lookback_days: settings.default_lookback_days,
+      }))
+    })
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -42,7 +53,13 @@ export function SuggestPage() {
         servings: form.servings,
         estimated: true,
         memo: result.reasoning,
-        menu: result.dishes.map((d) => ({ name: d.name, role: d.role, recipe_id: null })),
+        menu: result.dishes.map((d) => ({
+          name: d.name,
+          role: d.role,
+          recipe_id: null,
+          genre: null,
+          ingredients: d.ingredients,
+        })),
         nutrition_per_serving: result.nutrition_per_serving,
         cost_yen_per_serving: result.estimated_cost_yen_per_serving,
         tags: result.tags,
@@ -57,39 +74,50 @@ export function SuggestPage() {
   return (
     <div className="page">
       <form className="card suggest-form" onSubmit={handleSubmit}>
-        <div className="field-row">
-          <label>
-            食事
-            <select
-              value={form.meal_type}
-              onChange={(e) => setForm({ ...form, meal_type: e.target.value })}
-            >
-              {MEAL_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            人数
-            <input
-              type="number"
-              min={1}
-              value={form.servings}
-              onChange={(e) => setForm({ ...form, servings: Number(e.target.value) })}
-            />
-          </label>
-          <label>
-            直近何日を見る
-            <input
-              type="number"
-              min={0}
-              value={form.lookback_days}
-              onChange={(e) => setForm({ ...form, lookback_days: Number(e.target.value) })}
-            />
-          </label>
-        </div>
+        <label>
+          食事
+          <select
+            value={form.meal_type}
+            onChange={(e) => setForm({ ...form, meal_type: e.target.value })}
+          >
+            {MEAL_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="button"
+          className="fridge-group-title"
+          onClick={() => setOverrideOpen((v) => !v)}
+        >
+          <span className="fridge-group-arrow">{overrideOpen ? '▼' : '▶'}</span>
+          今回だけ人数・被り回避日数を変更(普段は世帯の設定を使用)
+        </button>
+        {overrideOpen && (
+          <div className="field-row">
+            <label>
+              人数
+              <input
+                type="number"
+                min={1}
+                value={form.servings}
+                onChange={(e) => setForm({ ...form, servings: Number(e.target.value) })}
+              />
+            </label>
+            <label>
+              直近何日を見る
+              <input
+                type="number"
+                min={0}
+                value={form.lookback_days}
+                onChange={(e) => setForm({ ...form, lookback_days: Number(e.target.value) })}
+              />
+            </label>
+          </div>
+        )}
         <label>
           食べたいもの・希望(任意)
           <textarea
@@ -112,6 +140,9 @@ export function SuggestPage() {
             {result.dishes.map((d, i) => (
               <li key={i}>
                 <span className="dish-role">{d.role}</span> {d.name}
+                {d.ingredients.length > 0 && (
+                  <span className="muted"> ({d.ingredients.join('、')})</span>
+                )}
               </li>
             ))}
           </ul>

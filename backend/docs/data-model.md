@@ -16,11 +16,15 @@ erDiagram
     RECIPES ||--o{ RECIPE_TAGS : "has"
     RECIPES |o--o{ MEAL_DISHES : "used in (任意)"
     INGREDIENT_CATEGORIES ||--o{ INGREDIENT_ALIASES : "has"
+    MEAL_DISHES ||--o{ MEAL_DISH_INGREDIENTS : "has"
+    DISH_GENRES ||--o{ DISH_GENRE_ALIASES : "has"
 
     HOUSEHOLDS {
         int id PK
         string name
         date created_at
+        int default_servings "献立設定のデフォルト人数"
+        int default_lookback_days "献立設定のデフォルト被り回避日数"
     }
 
     USERS {
@@ -80,6 +84,25 @@ erDiagram
         string name
         string role "主菜/副菜/汁物/主食 など、任意"
         int recipe_id FK "対応するお気に入りレシピ、任意"
+        string genre "カレー/丼 など、料理名から自動判定"
+    }
+
+    MEAL_DISH_INGREDIENTS {
+        int id PK
+        int meal_dish_id FK
+        string name
+    }
+
+    DISH_GENRES {
+        int id PK
+        string canonical_name UK
+        string genre
+    }
+
+    DISH_GENRE_ALIASES {
+        int id PK
+        string alias UK
+        int dish_genre_id FK
     }
 
     MEAL_TAGS {
@@ -112,11 +135,15 @@ erDiagram
 ### households(世帯・共有スコープ)
 冷蔵庫・常備品・献立・レシピの「持ち主」の単位。個人利用時も、ユーザー作成時に1人=1世帯を自動作成する(`scripts/create_user.py`)。将来的に家族で共有したくなったら、複数の`users`を同じ`household_id`に束ねるだけでよい設計(2026-09-15〜)。
 
+`default_servings`/`default_lookback_days`は献立提案フォームで毎回入力しなくていいように持たせた「献立設定」のデフォルト値(2026-09-15〜)。設定画面では個人設定ではなく「世帯の設定」として見せる(人数は世帯単位の事実に近いため)。`GET/PUT /api/household/settings`で参照・更新する。献立提案フォームでは普段はこの値をそのまま使い、必要な時だけ展開して今回だけ上書きできる。
+
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
 | name | string | 世帯名(自動生成、例: "aliceの世帯") |
 | created_at | date | |
+| default_servings | int | 献立提案のデフォルト人数(既定値2) |
+| default_lookback_days | int | 献立提案のデフォルト被り回避参照日数(既定値3) |
 
 ### users(ログインユーザー)
 個人利用のみ想定のため、公開の登録エンドポイントはなく`scripts/create_user.py`から作成する。認証(JWT発行・検証)の主体であり、`household_id`を通じて所属する世帯のデータにアクセスする。1ユーザーは1世帯にのみ所属する(複数世帯への同時所属は非対応、必要になれば中間テーブルへの拡張を検討)。
@@ -185,6 +212,8 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 
 `role`(主菜/副菜/汁物など)は献立提案(`POST /api/suggestions`)が生成した値をそのまま保存する(2026-09-15〜、以前は記録時に捨てていた)。`recipe_id`は`recipes.dish_name`と名前が完全一致する場合にベストエフォートで自動リンクする(手動指定も可)。名前の言い回しが違うと一致しないため、リンクされないケースは残る。
 
+`genre`は料理名から機械的に判定した大まかなジャンル(カレー/丼/シチューなど)。品目作成時(`POST /api/meals`)に`app/services/dish_genre_classifier.py`の`resolve_genre`で自動設定する(下記`dish_genres`参照)。「キーマカレーもバターチキンカレーも全部カレー」のようにまとめて扱いたい、という要望から追加(2026-09-15〜)。献立の被り回避判定での活用は今後の課題(#24)。
+
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
@@ -192,6 +221,28 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 | name | string | 料理名 |
 | role | string (nullable) | `主菜`/`副菜`/`汁物`/`主食` など。提案由来でない場合はNoneもあり得る |
 | recipe_id | int (FK → recipes.id, nullable) | 対応するお気に入りレシピ(名前完全一致で自動リンク、なければNone) |
+| genre | string (nullable) | `カレー`/`丼`/`シチュー`など(料理名から自動判定、下記`dish_genres`参照) |
+
+### meal_dish_ingredients(品目が使った食材の参照)
+`meal_dishes`に対する1:N。メニューが「使った食材」の参照だけを持つ(分量・切り方などの詳細はレシピ側の役割、`recipes.ingredients`)。献立提案(`POST /api/suggestions`)のツールスキーマ(`MENU_PROPOSAL_TOOL`)が各品目ごとに返す食材名リストをそのまま保存する(2026-09-15〜)。将来的に`ingredient_categories`マスターとの連携(表記揺れ吸収、冷蔵庫在庫との突き合わせ)を検討予定(#33)。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| id | int (PK) | |
+| meal_dish_id | int (FK → meal_dishes.id) | |
+| name | string | 食材名(分量なし) |
+
+### dish_genres(料理ジャンルの分類マスター)・dish_genre_aliases(表記揺れ)
+household非依存(アプリ全体で共有)。`ingredient_categories`/`ingredient_aliases`(食材のカテゴリ分けマスター)と全く同じパターン: 料理名(`canonical_name`)ごとにジャンル(`genre`)を持ち、表記揺れは`dish_genre_aliases`で吸収する。未知の料理名はClaude(Haiku、`app/services/dish_genre_classifier.py`)に1回だけ分類させて結果をキャッシュする(2026-09-15〜)。ジャンル語彙(`DISH_GENRE_VOCAB`、`app/services/claude_client.py`)は「カレー/丼/シチュー/鍋/汁物・スープ/麺類/炒め物/揚げ物/焼き物/煮物/サラダ/ご飯もの/パスタ/グラタン・オーブン料理/蒸し料理/その他」。
+
+| テーブル | カラム | 型 | 説明 |
+|---|---|---|---|
+| dish_genres | id | int (PK) | |
+| dish_genres | canonical_name | string (unique) | 正規化された料理名 |
+| dish_genres | genre | string | `DISH_GENRE_VOCAB`のいずれか |
+| dish_genre_aliases | id | int (PK) | |
+| dish_genre_aliases | alias | string (unique) | 表記揺れを含む実際の料理名 |
+| dish_genre_aliases | dish_genre_id | int (FK → dish_genres.id) | |
 
 ### meal_tags(献立のタグ)
 `meals`に対する1:N。1つの献立が複数カテゴリ・複数値のタグを持てる(例: `protein`に`豚肉`と`卵`の両方)。語彙は[`ai-project/menu/data/tags.json`](../../menu/data/tags.json)を踏襲。

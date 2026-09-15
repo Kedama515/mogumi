@@ -15,6 +15,10 @@ class Household(Base):
     name = Column(String, nullable=False)
     created_at = Column(Date, nullable=False, default=date.today)
 
+    # 献立設定(世帯で共有するデフォルト値)。設定画面では「世帯の設定」として見せる
+    default_servings = Column(Integer, nullable=False, default=2)
+    default_lookback_days = Column(Integer, nullable=False, default=3)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -103,8 +107,48 @@ class MealDish(Base):
     name = Column(String, nullable=False)
     role = Column(String)  # 主菜/副菜/汁物/主食 など。提案由来でない場合はNoneもあり得る
     recipe_id = Column(Integer, ForeignKey("recipes.id"))  # 対応するお気に入りレシピ(あれば)
+    genre = Column(String)  # カレー/丼 など。dish_genre_classifierで料理名から自動判定してキャッシュ
 
     meal = relationship("Meal", back_populates="dishes")
+    ingredients = relationship(
+        "MealDishIngredient", back_populates="meal_dish", cascade="all, delete-orphan"
+    )
+
+
+class MealDishIngredient(Base):
+    """メニュー(品目)が使った食材の参照。分量・切り方などの詳細は持たない(それはレシピ側)。"""
+
+    __tablename__ = "meal_dish_ingredients"
+
+    id = Column(Integer, primary_key=True)
+    meal_dish_id = Column(Integer, ForeignKey("meal_dishes.id"), nullable=False)
+    name = Column(String, nullable=False)
+
+    meal_dish = relationship("MealDish", back_populates="ingredients")
+
+
+class DishGenre(Base):
+    """料理名→ジャンル(カレー/丼など)のマスター(全household共通)。表記揺れはDishGenreAliasで吸収する。"""
+
+    __tablename__ = "dish_genres"
+
+    id = Column(Integer, primary_key=True)
+    canonical_name = Column(String, nullable=False, unique=True)
+    genre = Column(String, nullable=False)
+
+    aliases = relationship("DishGenreAlias", back_populates="dish", cascade="all, delete-orphan")
+
+
+class DishGenreAlias(Base):
+    """料理名の表記揺れ → 正規化した料理名(DishGenre)のマッピング。"""
+
+    __tablename__ = "dish_genre_aliases"
+
+    id = Column(Integer, primary_key=True)
+    alias = Column(String, nullable=False, unique=True)
+    dish_genre_id = Column(Integer, ForeignKey("dish_genres.id"), nullable=False)
+
+    dish = relationship("DishGenre", back_populates="aliases")
 
 
 class MealTag(Base):

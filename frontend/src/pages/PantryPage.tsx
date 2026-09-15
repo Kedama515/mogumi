@@ -3,6 +3,8 @@ import { api } from '../api'
 import { CategoryAccordion } from '../components/CategoryAccordion'
 import type { PantryItem } from '../types'
 
+const PANTRY_STATUS_OPTIONS = ['たっぷり', 'そろそろ切れそう', '切れた']
+
 export function PantryPage() {
   const [items, setItems] = useState<PantryItem[]>([])
   const [name, setName] = useState('')
@@ -31,6 +33,11 @@ export function PantryPage() {
     await reload()
   }
 
+  async function handleStatusChange(id: number, status: string) {
+    await api.updatePantryItemStatus(id, status)
+    await reload()
+  }
+
   return (
     <div className="page">
       <form className="card inline-form" onSubmit={handleAdd}>
@@ -50,6 +57,16 @@ export function PantryPage() {
             <li key={item.id} className="card">
               <div>
                 <strong>{item.name}</strong>
+                <select
+                  value={item.status}
+                  onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                >
+                  {PANTRY_STATUS_OPTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
                 {item.memo && <div className="muted">{item.memo}</div>}
               </div>
               <button className="ghost" onClick={() => handleDelete(item.id)}>

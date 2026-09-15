@@ -1,4 +1,5 @@
 import type {
+  ConsumableResponse,
   FridgeItem,
   Meal,
   MealStatus,
@@ -98,6 +99,8 @@ export const api = {
   listPantry: () => request<PantryItem[]>('/pantry'),
   addPantryItem: (item: { name: string; memo?: string }) =>
     request<PantryItem>('/pantry', { method: 'POST', body: JSON.stringify(item) }),
+  updatePantryItemStatus: (id: number, status: string) =>
+    request<PantryItem>(`/pantry/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
   deletePantryItem: (id: number) => request<void>(`/pantry/${id}`, { method: 'DELETE' }),
 
   listMealsForMonth: (year: number, month: number) =>
@@ -112,6 +115,18 @@ export const api = {
       body: JSON.stringify({ batch_cooked_dish_names: batchCookedDishNames }),
     }),
   deleteMeal: (id: number) => request<void>(`/meals/${id}`, { method: 'DELETE' }),
+  getConsumable: (mealId: number) => request<ConsumableResponse>(`/meals/${mealId}/consumable`),
+  consume: (
+    mealId: number,
+    fridgeItemIds: number[],
+    pantryUpdates: { pantry_item_id: number; status: string }[],
+  ) =>
+    request<void>(`/meals/${mealId}/consume`, {
+      method: 'POST',
+      body: JSON.stringify({ fridge_item_ids: fridgeItemIds, pantry_updates: pantryUpdates }),
+    }),
+  favoriteDish: (mealDishId: number) =>
+    request<Recipe>(`/meals/dishes/${mealDishId}/favorite`, { method: 'POST' }),
 
   suggest: async (req: SuggestionRequest) => {
     const result = await request<SuggestionResponse>('/suggestions', {

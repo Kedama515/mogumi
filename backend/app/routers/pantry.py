@@ -39,6 +39,31 @@ def add_pantry_item(
     return db_item
 
 
+@router.put("/{item_id}", response_model=schemas.PantryItemOut)
+def update_pantry_item_status(
+    item_id: int,
+    update: schemas.PantryItemStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    db_item = (
+        db.query(models.PantryItem)
+        .filter(
+            models.PantryItem.id == item_id,
+            models.PantryItem.household_id == current_user.household_id,
+        )
+        .first()
+    )
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="item not found")
+    if update.status not in schemas.PANTRY_STATUS_VOCAB:
+        raise HTTPException(status_code=422, detail="invalid status")
+    db_item.status = update.status
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
 @router.delete("/{item_id}", status_code=204)
 def delete_pantry_item(
     item_id: int,

@@ -11,6 +11,7 @@ export interface PantryItem {
   name: string
   category: string
   memo: string
+  status: string
 }
 
 export interface Tags {
@@ -28,6 +29,7 @@ export interface NutritionPerServing {
 }
 
 export interface MealDish {
+  id: number
   name: string
   role: string | null
   recipe_id: number | null
@@ -103,6 +105,24 @@ export interface SuggestionResponse {
   tags: Tags
   reasoning: string
   api_usage: ApiUsage
+}
+
+export interface FridgeMatchCandidate {
+  fridge_item_id: number
+  fridge_item_name: string
+  dish_name: string
+}
+
+export interface PantryMatchCandidate {
+  pantry_item_id: number
+  pantry_item_name: string
+  dish_name: string
+  current_status: string
+}
+
+export interface ConsumableResponse {
+  fridge_candidates: FridgeMatchCandidate[]
+  pantry_candidates: PantryMatchCandidate[]
 }
 
 export interface Recipe {

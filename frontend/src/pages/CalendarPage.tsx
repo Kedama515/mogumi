@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
+import { ConsumePanel } from '../components/ConsumePanel'
 import type { Meal } from '../types'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
@@ -38,6 +39,9 @@ export function CalendarPage() {
   const [manualMealType, setManualMealType] = useState('夕食')
   const [manualDishes, setManualDishes] = useState('')
   const [manualMemo, setManualMemo] = useState('')
+  const [justCreatedMealId, setJustCreatedMealId] = useState<number | null>(null)
+  const [selectedDishId, setSelectedDishId] = useState<number | null>(null)
+  const [favoritedDishIds, setFavoritedDishIds] = useState<Record<number, boolean>>({})
 
   async function reload() {
     setLoading(true)
@@ -69,8 +73,15 @@ export function CalendarPage() {
 
   useEffect(() => {
     setSelectedMealType(mealTypesForSelectedDate[0] ?? null)
+    setSelectedDishId(null)
+    setJustCreatedMealId(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, meals])
+
+  async function handleFavorite(mealDishId: number) {
+    await api.favoriteDish(mealDishId)
+    setFavoritedDishIds((prev) => ({ ...prev, [mealDishId]: true }))
+  }
 
   async function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -87,7 +98,15 @@ export function CalendarPage() {
       memo: manualMemo.trim(),
       menu: dishLines.map((line) => {
         const { name, role } = parseDishLine(line)
-        return { name, role, recipe_id: null, genre: null, ingredients: [], is_batch_cooked: false }
+        return {
+          id: 0,
+          name,
+          role,
+          recipe_id: null,
+          genre: null,
+          ingredients: [],
+          is_batch_cooked: false,
+        }
       }),
       nutrition_per_serving: {
         calories_kcal: null,
@@ -100,10 +119,11 @@ export function CalendarPage() {
       is_draft: false,
       timeline: [],
     }
-    await api.createMeal(meal)
+    const created = await api.createMeal(meal)
     setManualDishes('')
     setManualMemo('')
     setShowManualForm(false)
+    setJustCreatedMealId(created.id)
     await reload()
   }
 
@@ -235,35 +255,57 @@ export function CalendarPage() {
               </button>
             ))}
           </div>
-          <ul className="item-list">
-            {mealsForSelectedMealType.map((meal) => (
-              <li key={meal.id} className="card meal-card">
+          {mealsForSelectedMealType.map((meal) => {
+            const selectedDish = meal.menu.find((d) => d.id === selectedDishId)
+            return (
+              <div key={meal.id} className="card meal-card">
                 <div className="meal-header">
                   <strong>
                     {meal.date} {meal.meal_type}
                   </strong>
                   <span className="muted">{meal.servings}人前</span>
                 </div>
-                <div>
-                  {meal.menu.map((dish, i) => (
-                    <span key={i}>
+                <div className="dish-tiles">
+                  {meal.menu.map((dish) => (
+                    <button
+                      type="button"
+                      key={dish.id}
+                      className={'dish-tile' + (dish.id === selectedDishId ? ' selected' : '')}
+                      onClick={() => setSelectedDishId(dish.id === selectedDishId ? null : dish.id)}
+                    >
                       {dish.role && <span className="dish-role">{dish.role}</span>}
-                      {dish.name}
-                      {i < meal.menu.length - 1 && ' / '}
-                    </span>
+                      <strong>{dish.name}</strong>
+                    </button>
                   ))}
                 </div>
+                {selectedDish && (
+                  <div className="recipe-detail">
+                    {selectedDish.genre && <p className="muted">ジャンル: {selectedDish.genre}</p>}
+                    <p className="muted">
+                      使用食材: {selectedDish.ingredients.join('、') || '(未記録)'}
+                    </p>
+                    {selectedDish.recipe_id || favoritedDishIds[selectedDish.id] ? (
+                      <p className="muted">レシピ登録済み</p>
+                    ) : (
+                      <button className="ghost" onClick={() => handleFavorite(selectedDish.id)}>
+                        お気に入り登録
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="nutrition-row">
                   <span>{meal.nutrition_per_serving.calories_kcal ?? '-'} kcal</span>
                   <span>たんぱく質 {meal.nutrition_per_serving.protein_g ?? '-'} g</span>
                   <span>{meal.cost_yen_per_serving ?? '-'} 円/人前</span>
                 </div>
                 {meal.memo && <div className="muted">{meal.memo}</div>}
-              </li>
-            ))}
-          </ul>
+              </div>
+            )
+          })}
         </>
       )}
+
+      {justCreatedMealId && <ConsumePanel mealId={justCreatedMealId} />}
     </div>
   )
 }

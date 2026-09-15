@@ -136,6 +136,14 @@ def seed_ingredient_master(db: Session) -> None:
     db.commit()
 
 
+def lookup_canonical_name(db: Session, name: str) -> str:
+    """食材名をエイリアスマスターだけを見て正規化する(LLM呼び出しはしない)。
+    未知の表記はそのまま返す(#33: 冷蔵庫/パントリーとのマッチング用、キャッシュ登録は行わない)。"""
+    name = name.strip()
+    alias_row = db.query(models.IngredientAlias).filter(models.IngredientAlias.alias == name).first()
+    return alias_row.ingredient.canonical_name if alias_row is not None else name
+
+
 def resolve_category(db: Session, name: str) -> str:
     """食材名からカテゴリを解決する。未知の表記はLLMで1回だけ分類しマスターにキャッシュする。"""
     name = name.strip()

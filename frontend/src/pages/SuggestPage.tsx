@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { ConsumePanel } from '../components/ConsumePanel'
 import type { Meal, MealStatus, SuggestionRequest, SuggestionResponse, UserSettings } from '../types'
 
 const MEAL_TYPES = ['朝食', '昼食', '夕食']
@@ -41,6 +42,12 @@ export function SuggestPage() {
   const [refining, setRefining] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [batchCooked, setBatchCooked] = useState<Record<number, boolean>>({})
+  const [favoritedDishIds, setFavoritedDishIds] = useState<Record<number, boolean>>({})
+
+  async function handleFavorite(mealDishId: number) {
+    await api.favoriteDish(mealDishId)
+    setFavoritedDishIds((prev) => ({ ...prev, [mealDishId]: true }))
+  }
 
   useEffect(() => {
     api.getSettings().then((s) => {
@@ -321,6 +328,23 @@ export function SuggestPage() {
                     : 'この献立を記録する'}
               </button>
               {saveState === 'error' && <p className="error">記録に失敗しました</p>}
+              {saveState === 'saved' && status?.confirmed_meal && (
+                <div className="dish-tiles">
+                  {status.confirmed_meal.menu.map((dish) => (
+                    <div key={dish.id} className="dish-tile">
+                      <strong>{dish.name}</strong>
+                      {dish.recipe_id || favoritedDishIds[dish.id] ? (
+                        <span className="muted">レシピ登録済み</span>
+                      ) : (
+                        <button type="button" className="ghost" onClick={() => handleFavorite(dish.id)}>
+                          お気に入り登録
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {saveState === 'saved' && <ConsumePanel mealId={result.meal_id} />}
             </>
           )}
         </div>

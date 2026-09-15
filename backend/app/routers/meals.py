@@ -11,7 +11,9 @@ from .. import models, schemas
 from ..database import get_db
 from ..security import get_current_user
 from ..services.dish_genre_classifier import resolve_genre
+from ..services.ingredient_categorizer import lookup_canonical_name
 from ..tag_utils import tags_to_schema
+from .recipes import _recipe_to_out
 
 router = APIRouter()
 
@@ -26,6 +28,7 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
         memo=meal.memo or "",
         menu=[
             schemas.MealDishOut(
+                id=dish.id,
                 name=dish.name,
                 role=dish.role,
                 recipe_id=dish.recipe_id,
@@ -241,3 +244,147 @@ def delete_meal(
         raise HTTPException(status_code=404, detail="meal not found")
     db.delete(db_meal)
     db.commit()
+
+
+@router.get("/{meal_id}/consumable", response_model=schemas.ConsumableResponse)
+def get_consumable(
+    meal_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """献立が使った食材から、冷蔵庫・パントリーの消費済み候補を返す(#33)。
+    完全自動では消さず、候補提示までに留める(ユーザーがワンタップで確認・確定する)。"""
+    meal = (
+        db.query(models.Meal)
+        .filter(models.Meal.id == meal_id, models.Meal.household_id == current_user.household_id)
+        .first()
+    )
+    if meal is None:
+        raise HTTPException(status_code=404, detail="meal not found")
+
+    ingredient_to_dish: dict[str, str] = {}
+    for dish in meal.dishes:
+        for ingredient in dish.ingredients:
+            canonical = lookup_canonical_name(db, ingredient.name)
+            ingredient_to_dish.setdefault(ingredient.name, dish.name)
+            ingredient_to_dish.setdefault(canonical, dish.name)
+
+    if not ingredient_to_dish:
+        return schemas.ConsumableResponse()
+
+    fridge_candidates = []
+    for item in (
+        db.query(models.FridgeItem)
+        .filter(models.FridgeItem.household_id == current_user.household_id)
+        .all()
+    ):
+        canonical = lookup_canonical_name(db, item.name)
+        dish_name = ingredient_to_dish.get(item.name) or ingredient_to_dish.get(canonical)
+        if dish_name:
+            fridge_candidates.append(
+                schemas.FridgeMatchCandidate(
+                    fridge_item_id=item.id, fridge_item_name=item.name, dish_name=dish_name
+                )
+            )
+
+    pantry_candidates = []
+    for item in (
+        db.query(models.PantryItem)
+        .filter(models.PantryItem.household_id == current_user.household_id)
+        .all()
+    ):
+        canonical = lookup_canonical_name(db, item.name)
+        dish_name = ingredient_to_dish.get(item.name) or ingredient_to_dish.get(canonical)
+        if dish_name:
+            pantry_candidates.append(
+                schemas.PantryMatchCandidate(
+                    pantry_item_id=item.id,
+                    pantry_item_name=item.name,
+                    dish_name=dish_name,
+                    current_status=item.status,
+                )
+            )
+
+    return schemas.ConsumableResponse(
+        fridge_candidates=fridge_candidates, pantry_candidates=pantry_candidates
+    )
+
+
+@router.post("/{meal_id}/consume", status_code=204)
+def consume_ingredients(
+    meal_id: int,
+    request: schemas.ConsumeRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """冷蔵庫食材の消費済み削除・パントリー在庫ステータス更新をまとめて行う(#33・#34)。"""
+    meal = (
+        db.query(models.Meal)
+        .filter(models.Meal.id == meal_id, models.Meal.household_id == current_user.household_id)
+        .first()
+    )
+    if meal is None:
+        raise HTTPException(status_code=404, detail="meal not found")
+
+    if request.fridge_item_ids:
+        db.query(models.FridgeItem).filter(
+            models.FridgeItem.id.in_(request.fridge_item_ids),
+            models.FridgeItem.household_id == current_user.household_id,
+        ).delete(synchronize_session=False)
+
+    for update in request.pantry_updates:
+        if update.status not in schemas.PANTRY_STATUS_VOCAB:
+            continue
+        pantry_item = (
+            db.query(models.PantryItem)
+            .filter(
+                models.PantryItem.id == update.pantry_item_id,
+                models.PantryItem.household_id == current_user.household_id,
+            )
+            .first()
+        )
+        if pantry_item is not None:
+            pantry_item.status = update.status
+
+    db.commit()
+
+
+@router.post("/dishes/{meal_dish_id}/favorite", response_model=schemas.RecipeOut)
+def favorite_dish(
+    meal_dish_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """メニュー(品目)をお気に入り登録してレシピ化する(#19)。メニューは編集しない、
+    レシピは後から編集できる(#1のPUT)という前提。既にレシピ紐付け済みならそれを返す。"""
+    dish = (
+        db.query(models.MealDish)
+        .join(models.Meal)
+        .filter(
+            models.MealDish.id == meal_dish_id,
+            models.Meal.household_id == current_user.household_id,
+        )
+        .first()
+    )
+    if dish is None:
+        raise HTTPException(status_code=404, detail="dish not found")
+
+    if dish.recipe_id is not None:
+        recipe = db.get(models.Recipe, dish.recipe_id)
+        if recipe is not None:
+            return _recipe_to_out(recipe)
+
+    recipe = models.Recipe(
+        household_id=current_user.household_id,
+        dish_name=dish.name,
+        source_url="",
+        ingredients=json.dumps([i.name for i in dish.ingredients], ensure_ascii=False),
+        steps=json.dumps([], ensure_ascii=False),
+        memo="",
+    )
+    db.add(recipe)
+    db.flush()
+    dish.recipe_id = recipe.id
+    db.commit()
+    db.refresh(recipe)
+    return _recipe_to_out(recipe)

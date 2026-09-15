@@ -29,6 +29,9 @@ class FridgeItemDateUpdate(BaseModel):
     added_date: date
 
 
+PANTRY_STATUS_VOCAB = ["たっぷり", "そろそろ切れそう", "切れた"]
+
+
 class PantryItemIn(BaseModel):
     name: str
     memo: str = ""
@@ -41,6 +44,11 @@ class PantryItemOut(BaseModel):
     name: str
     category: str
     memo: str = ""
+    status: str = "たっぷり"
+
+
+class PantryItemStatusUpdate(BaseModel):
+    status: str
 
 
 class UserSettings(BaseModel):
@@ -83,6 +91,7 @@ class MealDishIn(BaseModel):
 
 
 class MealDishOut(BaseModel):
+    id: int
     name: str
     role: Optional[str] = None
     recipe_id: Optional[int] = None
@@ -126,6 +135,34 @@ class MealStatus(BaseModel):
     confirmed_meal: Optional[MealOut] = None
     draft_for_slot: Optional[MealOut] = None
     stale_draft: Optional[MealOut] = None
+
+
+class FridgeMatchCandidate(BaseModel):
+    fridge_item_id: int
+    fridge_item_name: str
+    dish_name: str
+
+
+class PantryMatchCandidate(BaseModel):
+    pantry_item_id: int
+    pantry_item_name: str
+    dish_name: str
+    current_status: str
+
+
+class ConsumableResponse(BaseModel):
+    fridge_candidates: list[FridgeMatchCandidate] = []
+    pantry_candidates: list[PantryMatchCandidate] = []
+
+
+class PantryStatusChange(BaseModel):
+    pantry_item_id: int
+    status: str
+
+
+class ConsumeRequest(BaseModel):
+    fridge_item_ids: list[int] = []
+    pantry_updates: list[PantryStatusChange] = []
 
 
 class SuggestedDish(BaseModel):

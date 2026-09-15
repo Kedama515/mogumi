@@ -87,6 +87,7 @@ class PantryItem(Base):
     name = Column(String, nullable=False)
     category = Column(String, nullable=False, default="その他")
     memo = Column(String, default="")
+    status = Column(String, nullable=False, default="たっぷり")  # たっぷり/そろそろ切れそう/切れた(#34)
 
 
 class Meal(Base):

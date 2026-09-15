@@ -65,6 +65,7 @@ erDiagram
         string name "household_id+nameでUK"
         string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/作り置き料理/その他"
         string memo
+        string status "たっぷり/そろそろ切れそう/切れた"
     }
 
     MEALS {
@@ -199,6 +200,8 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 ### pantry_items(常備品)
 調味料・乾物など、常にある前提のもの。`(household_id, name)`の組み合わせでユニーク制約(世帯ごとに同名アイテムは1つ)。`category`はfridge_itemsと同じ`ingredient_categories`/`ingredient_aliases`マスターを共有して自動設定する(2026-09-15〜)。
 
+`status`はパントリーの個数管理をせず、ざっくりした在庫状況を把握するための3段階ステータス(#34、2026-09-15〜)。表現はmogumiの可愛らしいアプリイメージに合わせて「たっぷり」「そろそろ切れそう」「切れた」に確定(本人指定)。`PUT /api/pantry/{id}`で更新する。献立記録時に使った常備品のステータスをまとめて更新できる導線(#33の「使った食材を整理する」パネル)もある。
+
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
@@ -206,6 +209,7 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 | name | string | 常備品名 |
 | category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`作り置き料理`/`その他` |
 | memo | string | 任意メモ |
+| status | string | `たっぷり`/`そろそろ切れそう`/`切れた`(既定値`たっぷり`) |
 
 ### meals(献立記録)
 1件が1回の食事(朝食/昼食/夕食)に対応。**栄養・材料費は献立1人前あたりの値**であり、品目ごとの内訳は持たない([`ai-project/menu`](../../menu)の実データ構造(`meals.json`)に合わせた設計)。
@@ -236,6 +240,10 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 `genre`は料理名から機械的に判定した大まかなジャンル(カレー/丼/シチューなど)。品目作成時(`POST /api/meals`)に`app/services/dish_genre_classifier.py`の`resolve_genre`で自動設定する(下記`dish_genres`参照)。「キーマカレーもバターチキンカレーも全部カレー」のようにまとめて扱いたい、という要望から追加(2026-09-15〜)。献立の被り回避判定での活用は今後の課題(#24)。
 
 `is_batch_cooked`(作り置き)がtrueの品目は、献立記録時(`POST /api/meals`)に自動的に`fridge_items`へ1件追加される(name=料理名, category=「作り置き料理」, added_date=献立の日付、2026-09-15〜)。ポテサラ等の作り置きは連日でもおかしくないため、タグでの例外ルールではなく実在庫として扱うことで、被り回避ロジック(#24)の対象外に自然に置ける設計(#11・#15での議論の結論)。
+
+`GET /api/meals/{meal_id}/consumable`・`POST /api/meals/{meal_id}/consume`(#33)は、この品目の`ingredients`(meal_dish_ingredients)を`ingredient_aliases`で正規化した上で、household内の`fridge_items`/`pantry_items`と名前突き合わせし、消費済み候補(冷蔵庫は削除候補、パントリーはステータス変更候補)を提示する。完全自動では消さず、ユーザーがワンタップで確認・確定する半自動設計(#33の議論の結論)。
+
+`POST /api/meals/dishes/{meal_dish_id}/favorite`(#19)は、この品目をお気に入りレシピとして保存する。既に`recipe_id`が設定済みならそのレシピをそのまま返す(冪等)。メニュー自体は記録後修正しない想定だが、生成されたレシピは`PUT /api/recipes/{id}`(#1)で後から編集できる。
 
 | カラム | 型 | 説明 |
 |---|---|---|

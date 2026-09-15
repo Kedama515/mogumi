@@ -75,7 +75,7 @@ npm install
 npm run dev
 ```
 
-`http://localhost:5173` を開いてログインすれば使い始められます。API仕様は `http://127.0.0.1:8000/docs`(Swagger UI、FastAPIが自動生成)を参照してください。データベースの構造は [`backend/docs/data-model.md`](backend/docs/data-model.md) にまとめています。
+`http://localhost:5173` を開いてログインすれば使い始められます。API仕様は `http://127.0.0.1:8000/docs`(Swagger UI、FastAPIが自動生成)を参照してください。データベースの構造は [`backend/docs/data-model.md`](backend/docs/data-model.md)、外部公開に向けたAWS構成案は [`docs/aws-architecture.md`](docs/aws-architecture.md) にまとめています。
 
 公開の新規登録画面はなく、`scripts/create_user.py` からユーザーを作成する運用です(個人・家族利用を想定しているため)。
 

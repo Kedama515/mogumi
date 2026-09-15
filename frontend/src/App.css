@@ -256,6 +256,26 @@
   margin-right: 0.4rem;
 }
 
+.dish-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.dish-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem;
+}
+
+.dish-tile .dish-role {
+  align-self: flex-start;
+}
+
 .timeline {
   padding-left: 1.2rem;
   display: flex;

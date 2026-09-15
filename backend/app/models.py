@@ -28,7 +28,17 @@ class User(Base):
     # 世帯=1ユーザーの現状ではどちらも個人設定に寄せておく方が素直(2026-09-15〜)。
     # 「世帯」は冷蔵庫・パントリー・レシピ・献立記録など実際に共有される在庫・記録のみを指す。
     default_servings = Column(Integer, nullable=False, default=2)
-    default_lookback_days = Column(Integer, nullable=False, default=3)
+
+    # 被り回避の許容日数を段階別に持つ(#24)。単一のlookback_daysを置き換え。
+    # 料理名の完全一致ほど長く避けたく、cuisine(和洋中)はほぼ気にしない、という粒度。
+    avoid_days_dish_name = Column(Integer, nullable=False, default=14)
+    avoid_days_genre = Column(Integer, nullable=False, default=5)
+    avoid_days_method_protein = Column(Integer, nullable=False, default=2)
+    avoid_days_cuisine = Column(Integer, nullable=False, default=1)
+
+    # 献立提案フローのモード: "batch"(一括、品目+タイムラインを一度に確定) or
+    # "confirm_menu"(品目を確認・微調整してからタイムラインを見る)
+    suggestion_mode = Column(String, nullable=False, default="batch")
 
 
 class FridgeItem(Base):
@@ -89,6 +99,8 @@ class Meal(Base):
     servings = Column(Integer, nullable=False, default=2)
     estimated = Column(Boolean, nullable=False, default=True)
     memo = Column(String, default="")
+    is_draft = Column(Boolean, nullable=False, default=False)  # 献立提案の下書き(#38)。確定するとFalseになる
+    timeline_json = Column(String)  # 調理タイムライン(JSON配列を文字列として保存)。手動登録の献立はNone
 
     # 栄養・材料費は献立(1人前)単位。品ごとの内訳は持たない(ai-project/menuの運用に合わせる)
     calories_kcal = Column(Float)

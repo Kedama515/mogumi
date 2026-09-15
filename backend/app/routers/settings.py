@@ -20,7 +20,11 @@ def update_settings(
     current_user: models.User = Depends(get_current_user),
 ):
     current_user.default_servings = settings.default_servings
-    current_user.default_lookback_days = settings.default_lookback_days
+    current_user.avoid_days_dish_name = settings.avoid_days_dish_name
+    current_user.avoid_days_genre = settings.avoid_days_genre
+    current_user.avoid_days_method_protein = settings.avoid_days_method_protein
+    current_user.avoid_days_cuisine = settings.avoid_days_cuisine
+    current_user.suggestion_mode = settings.suggestion_mode
     db.commit()
     db.refresh(current_user)
     return current_user

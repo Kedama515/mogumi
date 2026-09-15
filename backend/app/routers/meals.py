@@ -1,8 +1,9 @@
+import json
 from calendar import monthrange
 from datetime import date, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -42,6 +43,8 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
         ),
         cost_yen_per_serving=meal.cost_yen_per_serving,
         tags=tags_to_schema(meal.tags),
+        is_draft=meal.is_draft,
+        timeline=json.loads(meal.timeline_json) if meal.timeline_json else [],
     )
 
 
@@ -53,8 +56,12 @@ def list_meals(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """year・monthを指定するとその月1ヶ月分、指定しなければ直近days日分を返す(カレンダー表示用)。"""
-    conditions = [models.Meal.household_id == current_user.household_id]
+    """year・monthを指定するとその月1ヶ月分、指定しなければ直近days日分を返す(カレンダー表示用)。
+    仮(下書き)の献立は確定するまで表示しない(#38)。"""
+    conditions = [
+        models.Meal.household_id == current_user.household_id,
+        models.Meal.is_draft.is_(False),
+    ]
     if year is not None and month is not None:
         last_day = monthrange(year, month)[1]
         conditions.append(models.Meal.date >= date(year, month, 1))
@@ -66,6 +73,55 @@ def list_meals(
         select(models.Meal).where(*conditions).order_by(models.Meal.date.desc())
     ).all()
     return [_meal_to_out(meal) for meal in meals]
+
+
+@router.get("/status", response_model=schemas.MealStatus)
+def get_meal_status(
+    meal_type: str,
+    date_: date = Query(..., alias="date"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """指定スロット(date, meal_type)の確定済み献立・下書きの有無と、household全体の
+    放置された過去の下書きの有無を返す(#37・#38の事前チェック用)。"""
+    household_id = current_user.household_id
+
+    confirmed = (
+        db.query(models.Meal)
+        .filter(
+            models.Meal.household_id == household_id,
+            models.Meal.date == date_,
+            models.Meal.meal_type == meal_type,
+            models.Meal.is_draft.is_(False),
+        )
+        .first()
+    )
+    draft_for_slot = (
+        db.query(models.Meal)
+        .filter(
+            models.Meal.household_id == household_id,
+            models.Meal.date == date_,
+            models.Meal.meal_type == meal_type,
+            models.Meal.is_draft.is_(True),
+        )
+        .first()
+    )
+    stale_draft = (
+        db.query(models.Meal)
+        .filter(
+            models.Meal.household_id == household_id,
+            models.Meal.is_draft.is_(True),
+            models.Meal.date < date.today(),
+        )
+        .order_by(models.Meal.date.asc())
+        .first()
+    )
+
+    return schemas.MealStatus(
+        confirmed_meal=_meal_to_out(confirmed) if confirmed else None,
+        draft_for_slot=_meal_to_out(draft_for_slot) if draft_for_slot else None,
+        stale_draft=_meal_to_out(stale_draft) if stale_draft else None,
+    )
 
 
 @router.post("", response_model=schemas.MealOut, status_code=201)
@@ -128,3 +184,60 @@ def create_meal(
     db.commit()
     db.refresh(db_meal)
     return _meal_to_out(db_meal)
+
+
+@router.post("/{meal_id}/confirm", response_model=schemas.MealOut)
+def confirm_meal(
+    meal_id: int,
+    request: schemas.ConfirmMealRequest = schemas.ConfirmMealRequest(),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """献立提案の下書きを正式な献立として確定する(#38)。作り置き品目があれば冷蔵庫へ登録する。"""
+    db_meal = (
+        db.query(models.Meal)
+        .filter(
+            models.Meal.id == meal_id,
+            models.Meal.household_id == current_user.household_id,
+        )
+        .first()
+    )
+    if db_meal is None:
+        raise HTTPException(status_code=404, detail="meal not found")
+
+    db_meal.is_draft = False
+    for dish in db_meal.dishes:
+        if dish.name in request.batch_cooked_dish_names:
+            dish.is_batch_cooked = True
+        if dish.is_batch_cooked:
+            db.add(
+                models.FridgeItem(
+                    household_id=current_user.household_id,
+                    name=dish.name,
+                    category="作り置き料理",
+                    added_date=db_meal.date,
+                )
+            )
+    db.commit()
+    db.refresh(db_meal)
+    return _meal_to_out(db_meal)
+
+
+@router.delete("/{meal_id}", status_code=204)
+def delete_meal(
+    meal_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    db_meal = (
+        db.query(models.Meal)
+        .filter(
+            models.Meal.id == meal_id,
+            models.Meal.household_id == current_user.household_id,
+        )
+        .first()
+    )
+    if db_meal is None:
+        raise HTTPException(status_code=404, detail="meal not found")
+    db.delete(db_meal)
+    db.commit()

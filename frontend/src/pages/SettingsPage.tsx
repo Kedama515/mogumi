@@ -50,30 +50,90 @@ export function SettingsPage({
         <h3>個人設定</h3>
         <p className="muted">献立作成のたびに入力しなくていいように、普段使うデフォルト値をここで管理します。</p>
         {settings && (
-          <div className="field-row">
-            <label>
-              人数
-              <input
-                type="number"
-                min={1}
-                value={settings.default_servings}
-                onChange={(e) =>
-                  setSettings({ ...settings, default_servings: Number(e.target.value) })
-                }
-              />
-            </label>
-            <label>
-              被り回避で見る日数
-              <input
-                type="number"
-                min={0}
-                value={settings.default_lookback_days}
-                onChange={(e) =>
-                  setSettings({ ...settings, default_lookback_days: Number(e.target.value) })
-                }
-              />
-            </label>
-          </div>
+          <>
+            <div className="field-row">
+              <label>
+                人数
+                <input
+                  type="number"
+                  min={1}
+                  value={settings.default_servings}
+                  onChange={(e) =>
+                    setSettings({ ...settings, default_servings: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label>
+                献立提案モード
+                <select
+                  value={settings.suggestion_mode}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      suggestion_mode: e.target.value as 'batch' | 'confirm_menu',
+                    })
+                  }
+                >
+                  <option value="batch">一括サジェスト</option>
+                  <option value="confirm_menu">メニューを確認してから</option>
+                </select>
+              </label>
+            </div>
+
+            <h4>被り回避の許容日数</h4>
+            <p className="muted">数字が小さいほど厳しく被りを避けます。実際に使いながら調整してください。</p>
+            <div className="field-row">
+              <label>
+                料理名(完全一致)
+                <input
+                  type="number"
+                  min={0}
+                  value={settings.avoid_days_dish_name}
+                  onChange={(e) =>
+                    setSettings({ ...settings, avoid_days_dish_name: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label>
+                ジャンル(カレー/丼など)
+                <input
+                  type="number"
+                  min={0}
+                  value={settings.avoid_days_genre}
+                  onChange={(e) =>
+                    setSettings({ ...settings, avoid_days_genre: Number(e.target.value) })
+                  }
+                />
+              </label>
+            </div>
+            <div className="field-row">
+              <label>
+                調理法・タンパク源
+                <input
+                  type="number"
+                  min={0}
+                  value={settings.avoid_days_method_protein}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      avoid_days_method_protein: Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+              <label>
+                和洋中
+                <input
+                  type="number"
+                  min={0}
+                  value={settings.avoid_days_cuisine}
+                  onChange={(e) =>
+                    setSettings({ ...settings, avoid_days_cuisine: Number(e.target.value) })
+                  }
+                />
+              </label>
+            </div>
+          </>
         )}
         <button onClick={handleSave} disabled={!settings || saveState === 'saving'}>
           {saveState === 'saved' ? '保存しました' : saveState === 'saving' ? '保存中…' : '保存する'}

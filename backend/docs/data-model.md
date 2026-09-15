@@ -31,7 +31,11 @@ erDiagram
         string password_hash
         int household_id FK
         int default_servings "献立設定のデフォルト人数(個人設定)"
-        int default_lookback_days "献立設定のデフォルト被り回避日数(個人設定)"
+        int avoid_days_dish_name "被り回避: 料理名(完全一致)の許容日数"
+        int avoid_days_genre "被り回避: ジャンルの許容日数"
+        int avoid_days_method_protein "被り回避: 調理法・タンパク源の許容日数"
+        int avoid_days_cuisine "被り回避: 和洋中の許容日数"
+        string suggestion_mode "batch or confirm_menu"
     }
 
     FRIDGE_ITEMS {
@@ -76,6 +80,8 @@ erDiagram
         float fat_g "1人前あたり"
         float carb_g "1人前あたり"
         float cost_yen_per_serving
+        bool is_draft "献立提案の下書き(#38)。確定するとfalse"
+        string timeline_json "調理タイムライン(JSON配列を文字列として保存)"
     }
 
     MEAL_DISHES {
@@ -145,7 +151,11 @@ erDiagram
 ### users(ログインユーザー)
 個人利用のみ想定のため、公開の登録エンドポイントはなく`scripts/create_user.py`から作成する。認証(JWT発行・検証)の主体であり、`household_id`を通じて所属する世帯のデータにアクセスする。1ユーザーは1世帯にのみ所属する(複数世帯への同時所属は非対応、必要になれば中間テーブルへの拡張を検討)。
 
-`default_servings`/`default_lookback_days`は献立提案フォームで毎回入力しなくていいように持たせた「個人設定」のデフォルト値。`GET/PUT /api/settings`で参照・更新する。献立提案フォームでは普段はこの値をそのまま使い、必要な時だけ展開して今回だけ上書きできる。当初`households`に持たせていたが(2026-09-15の初期実装)、「被り回避の許容度は明確に個人差がある(小松菜のおひたし連発への不満は個人の体感)」「人数も現状は世帯=1ユーザーなので個人設定で困らない」という指摘から`users`に移動した(同日中に再設計)。「世帯」の概念は実際に共有される在庫・記録に限定し、個人の好みは`users`に置く、という一貫した整理。
+`default_servings`は献立提案フォームで毎回入力しなくていいように持たせた「個人設定」のデフォルト値。`GET/PUT /api/settings`で参照・更新する。献立提案フォームでは普段はこの値をそのまま使い、必要な時だけ展開して今回だけ上書きできる。当初`households`に持たせていたが(2026-09-15の初期実装)、「被り回避の許容度は明確に個人差がある(小松菜のおひたし連発への不満は個人の体感)」「人数も現状は世帯=1ユーザーなので個人設定で困らない」という指摘から`users`に移動した(同日中に再設計)。「世帯」の概念は実際に共有される在庫・記録に限定し、個人の好みは`users`に置く、という一貫した整理。
+
+`avoid_days_dish_name`/`avoid_days_genre`/`avoid_days_method_protein`/`avoid_days_cuisine`は被り回避を段階的な粒度で判定する(#24)ための、レベルごとの許容日数。単一の`lookback_days`を置き換えた(2026-09-15〜)。数字が小さいほど厳しく避ける。`app/services/suggestion_prompt.py`の`build_prompt`がこの4つのウィンドウで直近の献立を絞り込み、レベルごとに避けるべき値(料理名・ジャンル・調理法/タンパク源・和洋中)を明示的にプロンプトへ渡す。和洋中は`SuggestionRequest.cuisine_preference`が明示指定されていれば被り回避より優先する。
+
+`suggestion_mode`は献立提案フローの見せ方を切り替える(#25)。`batch`(一括、品目+タイムラインを生成後すぐ全て表示)と`confirm_menu`(品目タイル→微調整→「タイムラインを見る」ボタンで残りを開示、という順で見せる)。どちらもLLM呼び出しは1回のまま(品目+タイムラインを同時生成)で、表示のタイミングだけをフロントエンドで制御する簡易実装(2026-09-15〜)。トークン節約を狙った2段階LLM呼び出しへの本格的な分割は見送っている。
 
 | カラム | 型 | 説明 |
 |---|---|---|
@@ -154,7 +164,11 @@ erDiagram
 | password_hash | string | bcryptハッシュ |
 | household_id | int (FK → households.id) | 所属する世帯 |
 | default_servings | int | 献立提案のデフォルト人数(既定値2) |
-| default_lookback_days | int | 献立提案のデフォルト被り回避参照日数(既定値3) |
+| avoid_days_dish_name | int | 被り回避: 料理名(完全一致)の許容日数(既定値14) |
+| avoid_days_genre | int | 被り回避: ジャンルの許容日数(既定値5) |
+| avoid_days_method_protein | int | 被り回避: 調理法・タンパク源の許容日数(既定値2) |
+| avoid_days_cuisine | int | 被り回避: 和洋中の許容日数(既定値1) |
+| suggestion_mode | string | `batch` / `confirm_menu`(既定値`batch`) |
 
 ### fridge_items(冷蔵庫の中身)
 今ある食材のみを保持する(消費履歴は残さない)。使い切ったら行ごと削除する運用。`household_id`が同じユーザー同士で共有される。`category`は追加時に`ingredient_categories`/`ingredient_aliases`を引いて自動設定する(2026-09-15〜、画面でカテゴリごとにグルーピング表示するため)。
@@ -196,6 +210,10 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 ### meals(献立記録)
 1件が1回の食事(朝食/昼食/夕食)に対応。**栄養・材料費は献立1人前あたりの値**であり、品目ごとの内訳は持たない([`ai-project/menu`](../../menu)の実データ構造(`meals.json`)に合わせた設計)。
 
+`is_draft`は献立提案の下書き管理(#38)用のフラグ。`POST /api/suggestions`は生成結果を(household, date, meal_type)スロットの下書きとして即座に`meals`/`meal_dishes`へ保存する(is_draft=true)。同じスロットへ再提案(#26の微調整含む)すると上書きされる。`POST /api/meals/{id}/confirm`で確定すると`is_draft=false`になり、作り置き品目があればこのタイミングで`fridge_items`へ登録される。下書きは一覧(`GET /api/meals`、カレンダー表示)には出てこない。手動登録(`POST /api/meals`、#39)は常に`is_draft=false`で作成される。
+
+`timeline_json`は調理タイムライン(手順のリスト)をJSON文字列として保存する。手動登録の献立は`null`(タイムラインを生成していないため)。
+
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
@@ -207,6 +225,8 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 | memo | string | |
 | calories_kcal / protein_g / fat_g / carb_g | float | 1人前あたりの栄養価 |
 | cost_yen_per_serving | float | 1人前あたりの材料費概算 |
+| is_draft | bool | 献立提案の下書きかどうか(既定値false) |
+| timeline_json | string (nullable) | 調理タイムライン(JSON配列を文字列として保存) |
 
 ### meal_dishes(献立を構成する品目)
 `meals`に対する1:N。品目自体は栄養価を持たない(栄養・材料費は`meals`側で献立1人前単位のみ、品目ごとの内訳は意図的に持たない設計 — 過去に品目ごとの栄養値を持たせて手戻りした経緯があり、実際の運用(標準的な食品成分値からの概算を献立単位で行う)に合わせている)。

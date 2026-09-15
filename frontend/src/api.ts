@@ -1,6 +1,7 @@
 import type {
   FridgeItem,
   Meal,
+  MealStatus,
   PantryItem,
   Recipe,
   SuggestionRequest,
@@ -103,6 +104,14 @@ export const api = {
     request<Meal[]>(`/meals?year=${year}&month=${month}`),
   createMeal: (meal: Omit<Meal, 'id'>) =>
     request<Meal>('/meals', { method: 'POST', body: JSON.stringify(meal) }),
+  getMealStatus: (date: string, meal_type: string) =>
+    request<MealStatus>(`/meals/status?date=${date}&meal_type=${encodeURIComponent(meal_type)}`),
+  confirmMeal: (id: number, batchCookedDishNames: string[] = []) =>
+    request<Meal>(`/meals/${id}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify({ batch_cooked_dish_names: batchCookedDishNames }),
+    }),
+  deleteMeal: (id: number) => request<void>(`/meals/${id}`, { method: 'DELETE' }),
 
   suggest: async (req: SuggestionRequest) => {
     const result = await request<SuggestionResponse>('/suggestions', {

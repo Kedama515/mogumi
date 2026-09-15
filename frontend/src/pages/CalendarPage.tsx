@@ -97,6 +97,8 @@ export function CalendarPage() {
       },
       cost_yen_per_serving: null,
       tags: { protein: [], cuisine: [], cooking_method: [], style: [] },
+      is_draft: false,
+      timeline: [],
     }
     await api.createMeal(meal)
     setManualDishes('')

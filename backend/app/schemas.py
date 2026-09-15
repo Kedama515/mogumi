@@ -47,7 +47,11 @@ class UserSettings(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     default_servings: int = 2
-    default_lookback_days: int = 3
+    avoid_days_dish_name: int = 14
+    avoid_days_genre: int = 5
+    avoid_days_method_protein: int = 2
+    avoid_days_cuisine: int = 1
+    suggestion_mode: str = "batch"
 
 
 class Tags(BaseModel):
@@ -62,6 +66,12 @@ class NutritionPerServing(BaseModel):
     protein_g: Optional[float] = None
     fat_g: Optional[float] = None
     carb_g: Optional[float] = None
+
+
+class TimelineStep(BaseModel):
+    step: int
+    dish: str
+    description: str
 
 
 class MealDishIn(BaseModel):
@@ -104,14 +114,18 @@ class MealOut(BaseModel):
     nutrition_per_serving: NutritionPerServing
     cost_yen_per_serving: Optional[float] = None
     tags: Tags
+    is_draft: bool = False
+    timeline: list[TimelineStep] = []
 
 
-class SuggestionRequest(BaseModel):
-    meal_type: str = "夕食"
-    servings: int = 2
-    user_request: str = ""
-    lookback_days: int = 3
-    target_date: date = Field(default_factory=date.today)
+class ConfirmMealRequest(BaseModel):
+    batch_cooked_dish_names: list[str] = []
+
+
+class MealStatus(BaseModel):
+    confirmed_meal: Optional[MealOut] = None
+    draft_for_slot: Optional[MealOut] = None
+    stale_draft: Optional[MealOut] = None
 
 
 class SuggestedDish(BaseModel):
@@ -120,10 +134,16 @@ class SuggestedDish(BaseModel):
     ingredients: list[str] = []
 
 
-class TimelineStep(BaseModel):
-    step: int
-    dish: str
-    description: str
+class SuggestionRequest(BaseModel):
+    meal_type: str = "夕食"
+    servings: int = 2
+    user_request: str = ""
+    target_date: date = Field(default_factory=date.today)
+    cuisine_preference: Optional[str] = None  # 未指定(おまかせ)ならNone。「和食」等を明示指定できる
+
+    # 微調整(#26): 直前の提案結果を渡してステートレスに再生成させる場合に指定する
+    current_menu: Optional[list[SuggestedDish]] = None
+    refinement_request: str = ""
 
 
 class ApiUsage(BaseModel):
@@ -133,6 +153,7 @@ class ApiUsage(BaseModel):
 
 
 class SuggestionResponse(BaseModel):
+    meal_id: int
     dishes: list[SuggestedDish]
     timeline: list[TimelineStep]
     nutrition_per_serving: NutritionPerServing

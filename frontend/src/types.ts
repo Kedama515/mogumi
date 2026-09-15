@@ -38,7 +38,17 @@ export interface MealDish {
 
 export interface UserSettings {
   default_servings: number
-  default_lookback_days: number
+  avoid_days_dish_name: number
+  avoid_days_genre: number
+  avoid_days_method_protein: number
+  avoid_days_cuisine: number
+  suggestion_mode: 'batch' | 'confirm_menu'
+}
+
+export interface TimelineStep {
+  step: number
+  dish: string
+  description: string
 }
 
 export interface Meal {
@@ -52,14 +62,14 @@ export interface Meal {
   nutrition_per_serving: NutritionPerServing
   cost_yen_per_serving: number | null
   tags: Tags
+  is_draft: boolean
+  timeline: TimelineStep[]
 }
 
-export interface SuggestionRequest {
-  meal_type: string
-  servings: number
-  user_request: string
-  lookback_days: number
-  target_date: string
+export interface MealStatus {
+  confirmed_meal: Meal | null
+  draft_for_slot: Meal | null
+  stale_draft: Meal | null
 }
 
 export interface SuggestedDish {
@@ -68,10 +78,14 @@ export interface SuggestedDish {
   ingredients: string[]
 }
 
-export interface TimelineStep {
-  step: number
-  dish: string
-  description: string
+export interface SuggestionRequest {
+  meal_type: string
+  servings: number
+  user_request: string
+  target_date: string
+  cuisine_preference: string | null
+  current_menu?: SuggestedDish[]
+  refinement_request?: string
 }
 
 export interface ApiUsage {
@@ -81,6 +95,7 @@ export interface ApiUsage {
 }
 
 export interface SuggestionResponse {
+  meal_id: number
   dishes: SuggestedDish[]
   timeline: TimelineStep[]
   nutrition_per_serving: NutritionPerServing

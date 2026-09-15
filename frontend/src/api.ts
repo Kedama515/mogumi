@@ -96,7 +96,8 @@ export const api = {
     request<PantryItem>('/pantry', { method: 'POST', body: JSON.stringify(item) }),
   deletePantryItem: (id: number) => request<void>(`/pantry/${id}`, { method: 'DELETE' }),
 
-  listMeals: (days = 14) => request<Meal[]>(`/meals?days=${days}`),
+  listMealsForMonth: (year: number, month: number) =>
+    request<Meal[]>(`/meals?year=${year}&month=${month}`),
   createMeal: (meal: Omit<Meal, 'id'>) =>
     request<Meal>('/meals', { method: 'POST', body: JSON.stringify(meal) }),
 

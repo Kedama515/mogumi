@@ -419,3 +419,68 @@
   font-size: 0.7rem;
   color: var(--muted);
 }
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.calendar-header button {
+  font-size: 1.1rem;
+  padding: 0.2rem 0.7rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding-bottom: 0.3rem;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  border: none;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-cell.empty {
+  background: none;
+}
+
+.calendar-cell.has-meal {
+  background: var(--border);
+}
+
+.calendar-cell.selected {
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+}
+
+.calendar-dot {
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-dark);
+}
+
+.calendar-cell.selected .calendar-dot {
+  background: white;
+}

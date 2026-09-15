@@ -1,4 +1,6 @@
+from calendar import monthrange
 from datetime import date, timedelta
+from typing import Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
@@ -38,14 +40,22 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
 @router.get("", response_model=list[schemas.MealOut])
 def list_meals(
     days: int = 7,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    since = date.today() - timedelta(days=days)
+    """year・monthを指定するとその月1ヶ月分、指定しなければ直近days日分を返す(カレンダー表示用)。"""
+    conditions = [models.Meal.household_id == current_user.household_id]
+    if year is not None and month is not None:
+        last_day = monthrange(year, month)[1]
+        conditions.append(models.Meal.date >= date(year, month, 1))
+        conditions.append(models.Meal.date <= date(year, month, last_day))
+    else:
+        conditions.append(models.Meal.date >= date.today() - timedelta(days=days))
+
     meals = db.scalars(
-        select(models.Meal)
-        .where(models.Meal.household_id == current_user.household_id, models.Meal.date >= since)
-        .order_by(models.Meal.date.desc())
+        select(models.Meal).where(*conditions).order_by(models.Meal.date.desc())
     ).all()
     return [_meal_to_out(meal) for meal in meals]
 

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { clearToken, getToken, setUnauthorizedHandler } from './api'
 import { CostFooter } from './components/CostFooter'
+import { CalendarPage } from './pages/CalendarPage'
 import { FridgeManagementPage } from './pages/FridgeManagementPage'
-import { HistoryPage } from './pages/HistoryPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RecipePage } from './pages/RecipePage'
@@ -14,7 +14,7 @@ const TABS = [
   { key: 'fridge', label: '冷蔵庫', icon: '🧊', Component: FridgeManagementPage, main: false },
   { key: 'recipes', label: 'レシピ', icon: '📖', Component: RecipePage, main: false },
   { key: 'suggest', label: '献立', icon: '🍽️', Component: SuggestPage, main: true },
-  { key: 'history', label: 'カレンダー', icon: '📅', Component: HistoryPage, main: false },
+  { key: 'history', label: 'カレンダー', icon: '📅', Component: CalendarPage, main: false },
   { key: 'home', label: 'ホーム', icon: '🏠', Component: null, main: false },
 ] as const
 

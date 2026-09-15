@@ -393,3 +393,15 @@
   gap: 0.4rem;
   font-size: 0.9rem;
 }
+
+.fridge-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fridge-group-title {
+  margin: 0.5rem 0 0;
+  color: var(--accent-dark);
+  font-size: 1rem;
+}

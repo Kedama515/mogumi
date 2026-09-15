@@ -3,11 +3,18 @@ from fastapi import Depends, FastAPI
 
 load_dotenv()
 
-from .database import Base, engine  # noqa: E402
+from .database import Base, SessionLocal, engine  # noqa: E402
 from .routers import auth, fridge, meals, pantry, recipes, suggestions  # noqa: E402
 from .security import get_current_user  # noqa: E402
+from .services.ingredient_categorizer import seed_ingredient_master  # noqa: E402
 
 Base.metadata.create_all(bind=engine)
+
+_seed_db = SessionLocal()
+try:
+    seed_ingredient_master(_seed_db)
+finally:
+    _seed_db.close()
 
 app = FastAPI(title="mogumi API")
 

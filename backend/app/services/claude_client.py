@@ -79,8 +79,8 @@ def get_client() -> Anthropic:
     return _client
 
 
-def _cost_usd(usage) -> float | None:
-    pricing = MODEL_PRICING_PER_MTOK.get(MODEL)
+def _cost_usd(usage, model: str) -> float | None:
+    pricing = MODEL_PRICING_PER_MTOK.get(model)
     if pricing is None:
         return None
     return (
@@ -88,16 +88,16 @@ def _cost_usd(usage) -> float | None:
     ) / 1_000_000
 
 
-def _print_usage(usage, cost_usd: float | None) -> None:
+def _print_usage(usage, cost_usd: float | None, label: str = "Claude API使用量") -> None:
     if cost_usd is None:
         print(
-            f"[mogumi] Claude API使用量: input={usage.input_tokens} "
+            f"[mogumi] {label}: input={usage.input_tokens} "
             f"output={usage.output_tokens} tokens(料金表未登録のモデルのため費用は算出せず)"
         )
         return
     print(
-        f"[mogumi] Claude API使用量: input={usage.input_tokens} output={usage.output_tokens} "
-        f"tokens, 今回の費用 ≈ ${cost_usd:.4f}"
+        f"[mogumi] {label}: input={usage.input_tokens} output={usage.output_tokens} "
+        f"tokens, 今回の費用 ≈ ${cost_usd:.5f}"
     )
 
 
@@ -112,7 +112,7 @@ def propose_menu(prompt: str) -> tuple[dict, dict]:
         messages=[{"role": "user", "content": prompt}],
     )
     usage = response.usage
-    cost_usd = _cost_usd(usage)
+    cost_usd = _cost_usd(usage, MODEL)
     _print_usage(usage, cost_usd)
     usage_info = {
         "input_tokens": usage.input_tokens,
@@ -123,3 +123,44 @@ def propose_menu(prompt: str) -> tuple[dict, dict]:
         if block.type == "tool_use" and block.name == "propose_menu":
             return block.input, usage_info
     raise RuntimeError("Claude did not return a propose_menu tool call")
+
+
+CLASSIFY_INGREDIENT_MODEL = "claude-haiku-4-5"
+
+CLASSIFY_INGREDIENT_TOOL = {
+    "name": "classify_ingredient",
+    "description": "食材名を分類し、表記揺れ(カタカナ/漢字/送り仮名など)を吸収した正規化名を返す",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "canonical_name": {
+                "type": "string",
+                "description": "表記揺れを吸収した正規化名(基本はひらがな表記。例: 人参→にんじん)",
+            },
+            "category": {
+                "type": "string",
+                "enum": ["野菜", "肉", "魚介", "卵・乳製品", "主食", "果物", "その他"],
+            },
+        },
+        "required": ["canonical_name", "category"],
+    },
+}
+
+
+def classify_ingredient(name: str) -> dict:
+    """未知の食材名をLLMで1回だけ分類する(呼び出し側でマスターにキャッシュする想定)。"""
+    client = get_client()
+    response = client.messages.create(
+        model=CLASSIFY_INGREDIENT_MODEL,
+        max_tokens=256,
+        tools=[CLASSIFY_INGREDIENT_TOOL],
+        tool_choice={"type": "tool", "name": "classify_ingredient"},
+        messages=[{"role": "user", "content": f"次の食材名を分類してください: {name}"}],
+    )
+    usage = response.usage
+    cost_usd = _cost_usd(usage, CLASSIFY_INGREDIENT_MODEL)
+    _print_usage(usage, cost_usd, label="食材分類API使用量")
+    for block in response.content:
+        if block.type == "tool_use" and block.name == "classify_ingredient":
+            return block.input
+    raise RuntimeError("Claude did not return a classify_ingredient tool call")

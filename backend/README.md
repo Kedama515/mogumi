@@ -29,7 +29,7 @@ DBのテーブル定義・ER図は [`docs/data-model.md`](docs/data-model.md) �
 `/api/auth/login` 以外は全てログイン必須(`Authorization: Bearer <token>`)。冷蔵庫・常備品・献立・レシピはすべて`household`(世帯)単位でスコープされており、同じ世帯に属さないユーザーからは見えない(データモデルは[`docs/data-model.md`](docs/data-model.md)参照)。
 
 - `POST /api/auth/login` — ログイン(フォームエンコード、`username`/`password`)。JWTアクセストークンを返す(有効期限30日、個人利用のみ想定のため長め)
-- `GET/POST/DELETE /api/fridge` — 冷蔵庫の中身
+- `GET/POST/DELETE /api/fridge` — 冷蔵庫の中身。追加時に食材名から`category`(野菜/肉/魚介など)を自動判定して付与する(`docs/data-model.md`の`ingredient_categories`参照)
 - `GET/POST/DELETE /api/pantry` — 常備品
 - `GET/POST /api/meals` — 献立記録(直近分の取得、新規記録)。栄養・材料費は献立(1人前)単位で持ち、品目は名前のみの配列(`menu`)
 - `GET/POST/DELETE /api/recipes`, `GET /api/recipes/{id}` — お気に入りレシピ(材料・手順・タグ)

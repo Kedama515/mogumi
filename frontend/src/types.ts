@@ -1,6 +1,7 @@
 export interface FridgeItem {
   id: number
   name: string
+  category: string
   added_date: string
   memo: string
 }

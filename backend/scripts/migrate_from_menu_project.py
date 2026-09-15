@@ -23,6 +23,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from app import models  # noqa: E402
 from app.database import Base, SessionLocal, engine  # noqa: E402
+from app.services.ingredient_categorizer import resolve_category, seed_ingredient_master  # noqa: E402
 from scripts._household import resolve_household_id  # noqa: E402
 
 MENU_DATA_DIR = BACKEND_DIR.parent.parent / "menu" / "data"
@@ -32,10 +33,12 @@ def migrate_fridge(db, household_id: int, csv_path: Path) -> int:
     count = 0
     with csv_path.open(encoding="utf-8") as f:
         for row in csv.DictReader(f):
+            name = row["食材"]
             db.add(
                 models.FridgeItem(
                     household_id=household_id,
-                    name=row["食材"],
+                    name=name,
+                    category=resolve_category(db, name),
                     added_date=date.fromisoformat(row["追加日"]),
                     memo=row.get("メモ") or "",
                 )
@@ -89,6 +92,7 @@ def main() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
+        seed_ingredient_master(db)
         username = sys.argv[1] if len(sys.argv) > 1 else None
         household_id = resolve_household_id(db, username)
 

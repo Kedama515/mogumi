@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..security import get_current_user
+from ..services.ingredient_categorizer import resolve_category
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ def list_fridge_items(
     return (
         db.query(models.FridgeItem)
         .filter(models.FridgeItem.household_id == current_user.household_id)
-        .order_by(models.FridgeItem.added_date)
+        .order_by(models.FridgeItem.category, models.FridgeItem.added_date)
         .all()
     )
 
@@ -31,6 +32,7 @@ def add_fridge_item(
     db_item = models.FridgeItem(
         household_id=current_user.household_id,
         name=item.name,
+        category=resolve_category(db, item.name),
         added_date=item.added_date or date.today(),
         memo=item.memo,
     )

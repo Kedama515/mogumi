@@ -20,6 +20,7 @@ class FridgeItemOut(BaseModel):
 
     id: int
     name: str
+    category: str
     added_date: date
     memo: str = ""
 

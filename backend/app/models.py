@@ -31,8 +31,35 @@ class FridgeItem(Base):
     id = Column(Integer, primary_key=True)
     household_id = Column(Integer, ForeignKey("households.id"), nullable=False)
     name = Column(String, nullable=False)
+    category = Column(String, nullable=False, default="その他")
     added_date = Column(Date, nullable=False, default=date.today)
     memo = Column(String, default="")
+
+
+class IngredientCategory(Base):
+    """食材の分類マスター(全household共通)。表記揺れはIngredientAliasで吸収する。"""
+
+    __tablename__ = "ingredient_categories"
+
+    id = Column(Integer, primary_key=True)
+    canonical_name = Column(String, nullable=False, unique=True)
+    category = Column(String, nullable=False)  # 野菜/肉/魚介/卵・乳製品/主食/果物/その他
+
+    aliases = relationship(
+        "IngredientAlias", back_populates="ingredient", cascade="all, delete-orphan"
+    )
+
+
+class IngredientAlias(Base):
+    """食材名の表記揺れ(カタカナ/漢字/送り仮名など) → 正規化食材のマッピング。"""
+
+    __tablename__ = "ingredient_aliases"
+
+    id = Column(Integer, primary_key=True)
+    alias = Column(String, nullable=False, unique=True)
+    ingredient_id = Column(Integer, ForeignKey("ingredient_categories.id"), nullable=False)
+
+    ingredient = relationship("IngredientCategory", back_populates="aliases")
 
 
 class PantryItem(Base):

@@ -39,7 +39,7 @@ DBのテーブル定義・ER図は [`docs/data-model.md`](docs/data-model.md) �
 - `POST /api/meals/dishes/{meal_dish_id}/favorite` — メニュー(品目)をお気に入り登録してレシピ化する(#19)。既にレシピ紐付け済みならそれを返す(冪等)。メニュー自体は編集しない、生成されたレシピは`PUT /api/recipes/{id}`で後から編集する想定
 - `GET/POST/PUT/DELETE /api/recipes`, `GET /api/recipes/{id}` — お気に入りレシピ(材料・手順・タグ)。PUTで既存レシピの全項目を更新できる
 - `GET/PUT /api/settings` — 個人設定(人数のデフォルト値、被り回避の段階別許容日数、献立提案モード)
-- `POST /api/suggestions` — 献立提案。`target_date`(デフォルト今日、未来日付も指定可)・`cuisine_preference`(和洋中の明示指定、省略時はおまかせ)・冷蔵庫・常備品・段階別被り回避(`docs/data-model.md`の`users.avoid_days_*`参照)を踏まえて、Claude APIに複数品の献立+調理タイムライン+各品目の使用食材を提案させる。`current_menu`+`refinement_request`を渡すと、直前の提案をベースにステートレスに微調整できる(会話履歴は持たない)。生成結果は(household, target_date, meal_type)スロットの下書きとして即座に`meals`へ保存され(同じスロットへの再提案・微調整は上書き)、レスポンスの`meal_id`を使って`POST /api/meals/{id}/confirm`で確定する想定。呼び出すたびに使用トークン数と概算費用(USD)をサーバーの標準出力にログする(`app/services/claude_client.py`の料金表は手動更新、モデルを変えたら追記すること)
+- `POST /api/suggestions` — 献立提案。`target_date`(デフォルト今日、未来日付も指定可)・`cuisine_preference`(和洋中の明示指定、省略時はおまかせ)・`desired_dishes`/`desired_ingredients`(食べたいメニュー・使いたい食材のタグ入力、優先的に取り入れる)・冷蔵庫・常備品・段階別被り回避(`docs/data-model.md`の`users.avoid_days_*`参照)を踏まえて、Claude APIに複数品の献立+調理タイムライン+各品目の使用食材を提案させる。`current_menu`+`refinement_request`を渡すと、直前の提案をベースにステートレスに微調整できる(会話履歴は持たない)。生成結果は(household, target_date, meal_type)スロットの下書きとして即座に`meals`へ保存され(同じスロットへの再提案・微調整は上書き)、レスポンスの`meal_id`を使って`POST /api/meals/{id}/confirm`で確定する想定。呼び出すたびに使用トークン数と概算費用(USD)をサーバーの標準出力にログする(`app/services/claude_client.py`の料金表は手動更新、モデルを変えたら追記すること)
 
 ## 既存データの移行
 

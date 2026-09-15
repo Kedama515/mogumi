@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { ConsumePanel } from '../components/ConsumePanel'
+import { TagInput } from '../components/TagInput'
 import type { Meal, MealStatus, SuggestionRequest, SuggestionResponse, UserSettings } from '../types'
 
 const MEAL_TYPES = ['朝食', '昼食', '夕食']
@@ -30,6 +31,8 @@ export function SuggestPage() {
     user_request: '',
     target_date: today(),
     cuisine_preference: null,
+    desired_dishes: [],
+    desired_ingredients: [],
   })
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [status, setStatus] = useState<MealStatus | null>(null)
@@ -242,7 +245,23 @@ export function SuggestPage() {
           </div>
         )}
         <label>
-          食べたいもの・希望(任意)
+          食べたいメニュー(任意、スペースで区切って追加)
+          <TagInput
+            value={form.desired_dishes}
+            onChange={(tags) => setForm({ ...form, desired_dishes: tags })}
+            placeholder="例: カレー"
+          />
+        </label>
+        <label>
+          使いたい食材(任意、スペースで区切って追加)
+          <TagInput
+            value={form.desired_ingredients}
+            onChange={(tags) => setForm({ ...form, desired_ingredients: tags })}
+            placeholder="例: にんじん"
+          />
+        </label>
+        <label>
+          その他の希望(任意)
           <textarea
             placeholder="例: さっぱりしたものが食べたい"
             value={form.user_request}
@@ -262,21 +281,28 @@ export function SuggestPage() {
           <div className="dish-tiles">
             {result.dishes.map((d, i) => (
               <div key={i} className="dish-tile">
-                {d.role && <span className="dish-role">{d.role}</span>}
-                <strong>{d.name}</strong>
-                {d.ingredients.length > 0 && (
-                  <div className="muted">{d.ingredients.join('、')}</div>
-                )}
-                <label className="muted">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(batchCooked[i])}
-                    onChange={(e) =>
-                      setBatchCooked((prev) => ({ ...prev, [i]: e.target.checked }))
-                    }
-                  />
-                  作り置き(冷蔵庫に追加)
-                </label>
+                <div className="dish-tile-section">
+                  <span className="dish-tile-label">メニュー</span>
+                  {d.role && <span className="dish-role">{d.role}</span>}
+                  <strong>{d.name}</strong>
+                </div>
+                <div className="dish-tile-section">
+                  <span className="dish-tile-label">食材</span>
+                  <div className="muted">{d.ingredients.join('、') || '(未記録)'}</div>
+                </div>
+                <div className="dish-tile-section">
+                  <span className="dish-tile-label">備考</span>
+                  <label className="muted">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(batchCooked[i])}
+                      onChange={(e) =>
+                        setBatchCooked((prev) => ({ ...prev, [i]: e.target.checked }))
+                      }
+                    />
+                    作り置き(冷蔵庫に追加)
+                  </label>
+                </div>
               </div>
             ))}
           </div>

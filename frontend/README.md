@@ -21,7 +21,7 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 |---|---|---|
 | 冷蔵庫 | 「冷蔵庫」「常備品」のサブタブ切り替え。それぞれ一覧・追加・削除。どちらも野菜/肉/調味料/油などカテゴリごとにグルーピング表示(グループごとに開閉可能、`CategoryAccordion`コンポーネントを共用)。冷蔵庫の各アイテムは入庫日を、常備品の各アイテムは在庫ステータス(たっぷり/そろそろ切れそう/切れた)をその場で編集できる | `GET/POST/PUT/DELETE /api/fridge`, `GET/POST/PUT/DELETE /api/pantry` |
 | レシピ | お気に入りレシピの一覧・詳細(材料・手順)・追加・編集・削除 | `GET/POST/PUT/DELETE /api/recipes` |
-| **献立**(中央・円形強調) | フォーム(日付・食事・和洋中は常時表示、人数は普段は個人設定を使い折りたたみを開けば今回だけ上書き可能)を送って献立全体の提案をタイル表示で受け取り、微調整リクエストで再生成もできる。個人設定が「メニューを確認してから」モードなら、タイムラインは「この内容でタイムラインを見る」を押すまで隠される。品目ごとの「作り置き」チェックは記録時に冷蔵庫へ自動登録される。記録直後には使った食材を整理する`ConsumePanel`(冷蔵庫の消費済みチェック・パントリーのステータス変更をまとめて行える)と、品目ごとの「お気に入り登録」ボタンを表示する。放置された下書きがあれば新規提案をブロックし、同じスロットの下書きがあれば自動的に再表示、確定済みの献立があれば警告バナーを出す | `GET /api/settings`, `GET /api/meals/status`, `POST /api/suggestions`, `POST /api/meals/{id}/confirm`, `GET /api/meals/{id}/consumable`, `POST /api/meals/{id}/consume`, `POST /api/meals/dishes/{id}/favorite` |
+| **献立**(中央・円形強調) | フォーム(日付・食事・和洋中は常時表示、人数は普段は個人設定を使い折りたたみを開けば今回だけ上書き可能)。「食べたいメニュー」「使いたい食材」はタグ入力(`TagInput`、スペースで確定してチップ化)で複数指定でき、それ以外の希望は自由記述の「その他の希望」に分離している。送信すると献立全体の提案をタイル表示(メニュー/食材/備考の3セクション)で受け取り、微調整リクエストで再生成もできる。個人設定が「メニューを確認してから」モードなら、タイムラインは「この内容でタイムラインを見る」を押すまで隠される。品目ごとの「作り置き」チェックは記録時に冷蔵庫へ自動登録される。記録直後には使った食材を整理する`ConsumePanel`(冷蔵庫の消費済みチェック・パントリーのステータス変更をまとめて行える)と、品目ごとの「お気に入り登録」ボタンを表示する。放置された下書きがあれば新規提案をブロックし、同じスロットの下書きがあれば自動的に再表示、確定済みの献立があれば警告バナーを出す | `GET /api/settings`, `GET /api/meals/status`, `POST /api/suggestions`, `POST /api/meals/{id}/confirm`, `GET /api/meals/{id}/consumable`, `POST /api/meals/{id}/consume`, `POST /api/meals/dishes/{id}/favorite` |
 | カレンダー | 月表示のカレンダーグリッド(日付ごとに朝食/昼食/夕食を色分けしたドットで表示)。前月/次月に移動でき、日付を選ぶと朝/昼/晩のタブ(夕食>昼食>朝食の優先順で初期選択)でその日の献立をメニューごとのタイルで表示。タイルを選ぶとジャンル・使用食材・お気に入り登録ボタンが下に表示される。LLM提案を経由せず直接手動で献立を追加することもでき、追加直後は`ConsumePanel`も表示される | `GET/POST /api/meals?year=&month=`, `POST /api/meals/dishes/{id}/favorite` |
 | ホーム | 右上の⚙️から設定(個人設定・バージョン情報・主要ライブラリ一覧・アカウント)に遷移 | - |
 
@@ -36,6 +36,7 @@ mogumiのWeb UI(Vite + React + TypeScript)。バックエンド([`../backend`](.
 - `src/pages/` — タブごとの画面コンポーネント(`LoginPage`, `HomePage`, `SettingsPage`含む)。`FridgeManagementPage`が「冷蔵庫」「常備品」のサブタブをまとめる
 - `src/components/CostFooter.tsx` — 画面下部のAPI利用料表示
 - `src/components/ConsumePanel.tsx` — 献立記録直後に、使った食材の消費済みチェック(冷蔵庫)・在庫ステータス変更(パントリー)をまとめて行うパネル。SuggestPage/CalendarPageの両方から使う
+- `src/components/TagInput.tsx` — 複数値を入力する欄向けの汎用タグ入力(スペース/Enterで確定してチップ化、クリックまたはBackspaceで削除)。まずSuggestPageの「食べたいメニュー」「使いたい食材」に導入(#42の先行実装)
 - `src/App.tsx` — ログイン状態の管理と下部固定タブナビ(中央の円形ボタン含む)の入れ物
 
 ## ビルド

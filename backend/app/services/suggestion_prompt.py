@@ -19,6 +19,8 @@ def build_prompt(
     avoid_days_method_protein: int,
     avoid_days_cuisine: int,
     cuisine_preference: Optional[str] = None,
+    desired_dishes: Optional[list[str]] = None,
+    desired_ingredients: Optional[list[str]] = None,
     current_menu: Optional[list[dict]] = None,
     refinement_request: str = "",
 ) -> str:
@@ -120,7 +122,13 @@ def build_prompt(
 # 被り回避(段階的な粒度。数字が小さいほど厳しく避けること)
 {avoid_block}
 
-# ユーザーの希望
+# 食べたいメニュー(あれば優先的に取り入れる)
+{'、'.join(desired_dishes) if desired_dishes else "(特になし)"}
+
+# 使いたい食材(あれば優先的に使う)
+{'、'.join(desired_ingredients) if desired_ingredients else "(特になし)"}
+
+# その他の希望
 {user_request or "(特になし)"}
 {refine_block}
 

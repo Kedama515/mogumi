@@ -52,6 +52,8 @@ def suggest_menu(
         avoid_days_method_protein=current_user.avoid_days_method_protein,
         avoid_days_cuisine=current_user.avoid_days_cuisine,
         cuisine_preference=request.cuisine_preference,
+        desired_dishes=request.desired_dishes,
+        desired_ingredients=request.desired_ingredients,
         current_menu=(
             [d.model_dump() for d in request.current_menu] if request.current_menu else None
         ),

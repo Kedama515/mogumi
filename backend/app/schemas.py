@@ -178,6 +178,10 @@ class SuggestionRequest(BaseModel):
     target_date: date = Field(default_factory=date.today)
     cuisine_preference: Optional[str] = None  # 未指定(おまかせ)ならNone。「和食」等を明示指定できる
 
+    # 食べたいメニュー・使いたい食材の希望(タグ入力)。user_requestはそれ以外の希望用
+    desired_dishes: list[str] = []
+    desired_ingredients: list[str] = []
+
     # 微調整(#26): 直前の提案結果を渡してステートレスに再生成させる場合に指定する
     current_menu: Optional[list[SuggestedDish]] = None
     refinement_request: str = ""

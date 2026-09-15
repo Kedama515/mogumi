@@ -286,6 +286,65 @@
   align-self: flex-start;
 }
 
+.dish-tile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--border);
+}
+
+.dish-tile-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.dish-tile-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem;
+  background: white;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--border);
+  color: var(--accent-dark);
+  font-size: 0.85rem;
+  padding: 0.15rem 0.4rem 0.15rem 0.7rem;
+  border-radius: 999px;
+}
+
+.tag-chip button {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.tag-input input {
+  flex: 1;
+  min-width: 80px;
+  border: none;
+  outline: none;
+  padding: 0.15rem;
+}
+
 .timeline {
   padding-left: 1.2rem;
   display: flex;

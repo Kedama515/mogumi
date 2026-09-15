@@ -86,6 +86,8 @@ export interface SuggestionRequest {
   user_request: string
   target_date: string
   cuisine_preference: string | null
+  desired_dishes: string[]
+  desired_ingredients: string[]
   current_menu?: SuggestedDish[]
   refinement_request?: string
 }

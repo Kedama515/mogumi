@@ -110,6 +110,7 @@ class MealDish(Base):
     role = Column(String)  # 主菜/副菜/汁物/主食 など。提案由来でない場合はNoneもあり得る
     recipe_id = Column(Integer, ForeignKey("recipes.id"))  # 対応するお気に入りレシピ(あれば)
     genre = Column(String)  # カレー/丼 など。dish_genre_classifierで料理名から自動判定してキャッシュ
+    is_batch_cooked = Column(Boolean, nullable=False, default=False)  # 作り置き。trueならfridge_itemsへ自動登録
 
     meal = relationship("Meal", back_populates="dishes")
     ingredients = relationship(

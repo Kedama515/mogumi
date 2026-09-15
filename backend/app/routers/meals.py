@@ -30,6 +30,7 @@ def _meal_to_out(meal: models.Meal) -> schemas.MealOut:
                 recipe_id=dish.recipe_id,
                 genre=dish.genre,
                 ingredients=[i.name for i in dish.ingredients],
+                is_batch_cooked=dish.is_batch_cooked,
             )
             for dish in meal.dishes
         ],
@@ -104,11 +105,21 @@ def create_meal(
             role=dish.role,
             recipe_id=recipe_id,
             genre=resolve_genre(db, dish.name),
+            is_batch_cooked=dish.is_batch_cooked,
         )
         db_dish.ingredients = [
             models.MealDishIngredient(name=name) for name in dish.ingredients
         ]
         db_meal.dishes.append(db_dish)
+        if dish.is_batch_cooked:
+            db.add(
+                models.FridgeItem(
+                    household_id=current_user.household_id,
+                    name=dish.name,
+                    category="作り置き料理",
+                    added_date=meal.date,
+                )
+            )
     for category, values in meal.tags.model_dump().items():
         for value in values:
             db_meal.tags.append(models.MealTag(category=category, value=value))

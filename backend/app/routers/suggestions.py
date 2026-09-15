@@ -23,6 +23,7 @@ def suggest_menu(
         servings=request.servings,
         user_request=request.user_request,
         lookback_days=request.lookback_days,
+        target_date=request.target_date,
     )
     menu_data, usage = propose_menu(prompt)
     return schemas.SuggestionResponse(**menu_data, api_usage=usage)

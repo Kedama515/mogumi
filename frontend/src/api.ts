@@ -90,6 +90,8 @@ export const api = {
   listFridge: () => request<FridgeItem[]>('/fridge'),
   addFridgeItem: (item: { name: string; memo?: string }) =>
     request<FridgeItem>('/fridge', { method: 'POST', body: JSON.stringify(item) }),
+  updateFridgeItemDate: (id: number, added_date: string) =>
+    request<FridgeItem>(`/fridge/${id}`, { method: 'PUT', body: JSON.stringify({ added_date }) }),
   deleteFridgeItem: (id: number) => request<void>(`/fridge/${id}`, { method: 'DELETE' }),
 
   listPantry: () => request<PantryItem[]>('/pantry'),
@@ -123,5 +125,7 @@ export const api = {
   listRecipes: () => request<Recipe[]>('/recipes'),
   createRecipe: (recipe: Omit<Recipe, 'id'>) =>
     request<Recipe>('/recipes', { method: 'POST', body: JSON.stringify(recipe) }),
+  updateRecipe: (id: number, recipe: Omit<Recipe, 'id'>) =>
+    request<Recipe>(`/recipes/${id}`, { method: 'PUT', body: JSON.stringify(recipe) }),
   deleteRecipe: (id: number) => request<void>(`/recipes/${id}`, { method: 'DELETE' }),
 }

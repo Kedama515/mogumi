@@ -31,6 +31,11 @@ export function FridgePage() {
     await reload()
   }
 
+  async function handleDateChange(id: number, addedDate: string) {
+    await api.updateFridgeItemDate(id, addedDate)
+    await reload()
+  }
+
   return (
     <div className="page">
       <form className="card inline-form" onSubmit={handleAdd}>
@@ -50,7 +55,15 @@ export function FridgePage() {
             <li key={item.id} className="card">
               <div>
                 <strong>{item.name}</strong>
-                <span className="muted"> 追加日: {item.added_date}</span>
+                <span className="muted">
+                  {' '}
+                  追加日:{' '}
+                  <input
+                    type="date"
+                    value={item.added_date}
+                    onChange={(e) => handleDateChange(item.id, e.target.value)}
+                  />
+                </span>
                 {item.memo && <div className="muted">{item.memo}</div>}
               </div>
               <button className="ghost" onClick={() => handleDelete(item.id)}>

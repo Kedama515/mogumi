@@ -11,6 +11,7 @@ export const CATEGORY_ORDER = [
   '調味料',
   '油',
   '乾物・缶詰',
+  '作り置き料理',
   'その他',
 ]
 

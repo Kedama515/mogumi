@@ -33,6 +33,7 @@ export function RecipePage() {
   const [loading, setLoading] = useState(true)
   const [openId, setOpenId] = useState<number | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
 
   async function reload() {
@@ -43,10 +44,32 @@ export function RecipePage() {
     reload().finally(() => setLoading(false))
   }, [])
 
-  async function handleAdd(e: React.FormEvent) {
+  function startEdit(r: Recipe) {
+    setEditingId(r.id)
+    setForm({
+      dish_name: r.dish_name,
+      source_url: r.source_url,
+      ingredients: r.ingredients.join('\n'),
+      steps: r.steps.join('\n'),
+      memo: r.memo,
+      protein: r.tags.protein.join(', '),
+      cuisine: r.tags.cuisine.join(', '),
+      cooking_method: r.tags.cooking_method.join(', '),
+      style: r.tags.style.join(', '),
+    })
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    setForm(EMPTY_FORM)
+    setEditingId(null)
+    setShowForm(false)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.dish_name.trim()) return
-    await api.createRecipe({
+    const payload = {
       dish_name: form.dish_name.trim(),
       source_url: form.source_url.trim(),
       ingredients: splitLines(form.ingredients),
@@ -58,9 +81,13 @@ export function RecipePage() {
         cooking_method: splitCsv(form.cooking_method),
         style: splitCsv(form.style),
       },
-    })
-    setForm(EMPTY_FORM)
-    setShowForm(false)
+    }
+    if (editingId != null) {
+      await api.updateRecipe(editingId, payload)
+    } else {
+      await api.createRecipe(payload)
+    }
+    closeForm()
     await reload()
   }
 
@@ -74,12 +101,15 @@ export function RecipePage() {
 
   return (
     <div className="page">
-      <button className="ghost" onClick={() => setShowForm((v) => !v)}>
+      <button
+        className="ghost"
+        onClick={() => (showForm ? closeForm() : setShowForm(true))}
+      >
         {showForm ? '閉じる' : '＋ レシピを追加'}
       </button>
 
       {showForm && (
-        <form className="card recipe-form" onSubmit={handleAdd}>
+        <form className="card recipe-form" onSubmit={handleSubmit}>
           <label>
             料理名
             <input
@@ -141,7 +171,7 @@ export function RecipePage() {
               <input value={form.style} onChange={(e) => setForm({ ...form, style: e.target.value })} />
             </label>
           </div>
-          <button type="submit">追加</button>
+          <button type="submit">{editingId != null ? '更新' : '追加'}</button>
         </form>
       )}
 
@@ -197,6 +227,9 @@ export function RecipePage() {
                     ))}
                   </ol>
                   {r.memo && <p className="muted">{r.memo}</p>}
+                  <button className="ghost" onClick={() => startEdit(r)}>
+                    編集
+                  </button>
                 </div>
               )}
             </li>

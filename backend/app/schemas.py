@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Token(BaseModel):
@@ -23,6 +23,10 @@ class FridgeItemOut(BaseModel):
     category: str
     added_date: date
     memo: str = ""
+
+
+class FridgeItemDateUpdate(BaseModel):
+    added_date: date
 
 
 class PantryItemIn(BaseModel):
@@ -65,6 +69,7 @@ class MealDishIn(BaseModel):
     role: Optional[str] = None
     recipe_id: Optional[int] = None
     ingredients: list[str] = []
+    is_batch_cooked: bool = False
 
 
 class MealDishOut(BaseModel):
@@ -73,6 +78,7 @@ class MealDishOut(BaseModel):
     recipe_id: Optional[int] = None
     genre: Optional[str] = None
     ingredients: list[str] = []
+    is_batch_cooked: bool = False
 
 
 class MealIn(BaseModel):
@@ -105,6 +111,7 @@ class SuggestionRequest(BaseModel):
     servings: int = 2
     user_request: str = ""
     lookback_days: int = 3
+    target_date: date = Field(default_factory=date.today)
 
 
 class SuggestedDish(BaseModel):

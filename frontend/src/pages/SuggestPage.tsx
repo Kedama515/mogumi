@@ -4,18 +4,24 @@ import type { Meal, SuggestionRequest, SuggestionResponse } from '../types'
 
 const MEAL_TYPES = ['朝食', '昼食', '夕食']
 
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function SuggestPage() {
   const [form, setForm] = useState<SuggestionRequest>({
     meal_type: '夕食',
     servings: 2,
     user_request: '',
     lookback_days: 3,
+    target_date: today(),
   })
   const [overrideOpen, setOverrideOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SuggestionResponse | null>(null)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [batchCooked, setBatchCooked] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
     api.getSettings().then((settings) => {
@@ -33,6 +39,7 @@ export function SuggestPage() {
     setError(null)
     setResult(null)
     setSaveState('idle')
+    setBatchCooked({})
     try {
       const suggestion = await api.suggest(form)
       setResult(suggestion)
@@ -48,17 +55,18 @@ export function SuggestPage() {
     setSaveState('saving')
     try {
       const meal: Omit<Meal, 'id'> = {
-        date: new Date().toISOString().slice(0, 10),
+        date: form.target_date,
         meal_type: form.meal_type,
         servings: form.servings,
         estimated: true,
         memo: result.reasoning,
-        menu: result.dishes.map((d) => ({
+        menu: result.dishes.map((d, i) => ({
           name: d.name,
           role: d.role,
           recipe_id: null,
           genre: null,
           ingredients: d.ingredients,
+          is_batch_cooked: Boolean(batchCooked[i]),
         })),
         nutrition_per_serving: result.nutrition_per_serving,
         cost_yen_per_serving: result.estimated_cost_yen_per_serving,
@@ -74,19 +82,29 @@ export function SuggestPage() {
   return (
     <div className="page">
       <form className="card suggest-form" onSubmit={handleSubmit}>
-        <label>
-          食事
-          <select
-            value={form.meal_type}
-            onChange={(e) => setForm({ ...form, meal_type: e.target.value })}
-          >
-            {MEAL_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="field-row">
+          <label>
+            日付
+            <input
+              type="date"
+              value={form.target_date}
+              onChange={(e) => setForm({ ...form, target_date: e.target.value })}
+            />
+          </label>
+          <label>
+            食事
+            <select
+              value={form.meal_type}
+              onChange={(e) => setForm({ ...form, meal_type: e.target.value })}
+            >
+              {MEAL_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <button
           type="button"
@@ -143,6 +161,16 @@ export function SuggestPage() {
                 {d.ingredients.length > 0 && (
                   <span className="muted"> ({d.ingredients.join('、')})</span>
                 )}
+                <label className="muted">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(batchCooked[i])}
+                    onChange={(e) =>
+                      setBatchCooked((prev) => ({ ...prev, [i]: e.target.checked }))
+                    }
+                  />
+                  作り置き(冷蔵庫に追加)
+                </label>
               </li>
             ))}
           </ul>

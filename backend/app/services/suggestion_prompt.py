@@ -13,6 +13,7 @@ def build_prompt(
     servings: int,
     user_request: str,
     lookback_days: int,
+    target_date: date,
 ) -> str:
     fridge = db.scalars(
         select(models.FridgeItem).where(models.FridgeItem.household_id == household_id)
@@ -21,10 +22,14 @@ def build_prompt(
         select(models.PantryItem).where(models.PantryItem.household_id == household_id)
     ).all()
 
-    since = date.today() - timedelta(days=lookback_days)
+    since = target_date - timedelta(days=lookback_days)
     recent_meals = db.scalars(
         select(models.Meal)
-        .where(models.Meal.household_id == household_id, models.Meal.date >= since)
+        .where(
+            models.Meal.household_id == household_id,
+            models.Meal.date >= since,
+            models.Meal.date < target_date,
+        )
         .order_by(models.Meal.date.desc())
     ).all()
 
@@ -38,7 +43,9 @@ def build_prompt(
         recent_lines.append(f"- {meal.date} {meal.meal_type}: {dish_names} [{tag_values}]")
     recent_block = "\n".join(recent_lines) or "(記録なし)"
 
-    return f"""あなたは家庭料理の献立提案アシスタントです。以下の情報をもとに、{servings}人前の{meal_type}の献立を提案してください。
+    date_note = "" if target_date == date.today() else f"(今日は{date.today()}、{target_date}分の献立を先取りで考える)"
+
+    return f"""あなたは家庭料理の献立提案アシスタントです。以下の情報をもとに、{target_date}の{servings}人前の{meal_type}の献立を提案してください。{date_note}
 
 # 冷蔵庫にある食材
 {fridge_lines}

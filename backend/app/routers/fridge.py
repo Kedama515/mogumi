@@ -42,6 +42,29 @@ def add_fridge_item(
     return db_item
 
 
+@router.put("/{item_id}", response_model=schemas.FridgeItemOut)
+def update_fridge_item_date(
+    item_id: int,
+    update: schemas.FridgeItemDateUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    db_item = (
+        db.query(models.FridgeItem)
+        .filter(
+            models.FridgeItem.id == item_id,
+            models.FridgeItem.household_id == current_user.household_id,
+        )
+        .first()
+    )
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="item not found")
+    db_item.added_date = update.added_date
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
 @router.delete("/{item_id}", status_code=204)
 def delete_fridge_item(
     item_id: int,

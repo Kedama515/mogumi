@@ -78,6 +78,39 @@ def create_recipe(
     return _recipe_to_out(db_recipe)
 
 
+@router.put("/{recipe_id}", response_model=schemas.RecipeOut)
+def update_recipe(
+    recipe_id: int,
+    recipe: schemas.RecipeIn,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    db_recipe = (
+        db.query(models.Recipe)
+        .filter(
+            models.Recipe.id == recipe_id, models.Recipe.household_id == current_user.household_id
+        )
+        .first()
+    )
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="recipe not found")
+
+    db_recipe.dish_name = recipe.dish_name
+    db_recipe.source_url = recipe.source_url
+    db_recipe.ingredients = json.dumps(recipe.ingredients, ensure_ascii=False)
+    db_recipe.steps = json.dumps(recipe.steps, ensure_ascii=False)
+    db_recipe.memo = recipe.memo
+    db_recipe.tags = [
+        models.RecipeTag(category=category, value=value)
+        for category, values in recipe.tags.model_dump().items()
+        for value in values
+    ]
+
+    db.commit()
+    db.refresh(db_recipe)
+    return _recipe_to_out(db_recipe)
+
+
 @router.delete("/{recipe_id}", status_code=204)
 def delete_recipe(
     recipe_id: int,

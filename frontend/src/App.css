@@ -472,13 +472,30 @@
   font-weight: bold;
 }
 
-.calendar-dot {
+.calendar-dots {
   position: absolute;
   bottom: 4px;
+  display: flex;
+  gap: 2px;
+}
+
+.calendar-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: var(--accent-dark);
+}
+
+.calendar-dot-breakfast {
+  background: #e8b64c;
+}
+
+.calendar-dot-lunch {
+  background: #4c9be8;
+}
+
+.calendar-dot-dinner {
+  background: #e85c4c;
 }
 
 .calendar-cell.selected .calendar-dot {

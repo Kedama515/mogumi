@@ -38,7 +38,7 @@ erDiagram
         int id PK
         int household_id FK
         string name
-        string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/その他"
+        string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/作り置き料理/その他"
         date added_date
         string memo
     }
@@ -59,7 +59,7 @@ erDiagram
         int id PK
         int household_id FK
         string name "household_id+nameでUK"
-        string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/その他"
+        string category "野菜/肉/魚介/卵・乳製品/主食/果物/調味料/油/乾物・缶詰/作り置き料理/その他"
         string memo
     }
 
@@ -85,6 +85,7 @@ erDiagram
         string role "主菜/副菜/汁物/主食 など、任意"
         int recipe_id FK "対応するお気に入りレシピ、任意"
         string genre "カレー/丼 など、料理名から自動判定"
+        bool is_batch_cooked "作り置き。trueならfridge_itemsへ自動登録"
     }
 
     MEAL_DISH_INGREDIENTS {
@@ -163,7 +164,7 @@ erDiagram
 | id | int (PK) | |
 | household_id | int (FK → households.id) | |
 | name | string | 食材名(ユーザーが入力した表記そのまま) |
-| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`その他` |
+| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`作り置き料理`/`その他` |
 | added_date | date | 追加日 |
 | memo | string | 任意メモ |
 
@@ -174,7 +175,7 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 |---|---|---|---|
 | ingredient_categories | id | int (PK) | |
 | ingredient_categories | canonical_name | string (unique) | 正規化された食材名(基本ひらがな) |
-| ingredient_categories | category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`その他` |
+| ingredient_categories | category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`作り置き料理`/`その他` |
 | ingredient_aliases | id | int (PK) | |
 | ingredient_aliases | alias | string (unique) | 表記揺れを含む実際の食材名 |
 | ingredient_aliases | ingredient_id | int (FK → ingredient_categories.id) | |
@@ -189,7 +190,7 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 | id | int (PK) | |
 | household_id | int (FK → households.id) | |
 | name | string | 常備品名 |
-| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`その他` |
+| category | string | `野菜`/`肉`/`魚介`/`卵・乳製品`/`主食`/`果物`/`調味料`/`油`/`乾物・缶詰`/`作り置き料理`/`その他` |
 | memo | string | 任意メモ |
 
 ### meals(献立記録)
@@ -214,6 +215,8 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 
 `genre`は料理名から機械的に判定した大まかなジャンル(カレー/丼/シチューなど)。品目作成時(`POST /api/meals`)に`app/services/dish_genre_classifier.py`の`resolve_genre`で自動設定する(下記`dish_genres`参照)。「キーマカレーもバターチキンカレーも全部カレー」のようにまとめて扱いたい、という要望から追加(2026-09-15〜)。献立の被り回避判定での活用は今後の課題(#24)。
 
+`is_batch_cooked`(作り置き)がtrueの品目は、献立記録時(`POST /api/meals`)に自動的に`fridge_items`へ1件追加される(name=料理名, category=「作り置き料理」, added_date=献立の日付、2026-09-15〜)。ポテサラ等の作り置きは連日でもおかしくないため、タグでの例外ルールではなく実在庫として扱うことで、被り回避ロジック(#24)の対象外に自然に置ける設計(#11・#15での議論の結論)。
+
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | int (PK) | |
@@ -222,6 +225,7 @@ household非依存(アプリ全体で共有)。`にんじん`/`ニンジン`/`�
 | role | string (nullable) | `主菜`/`副菜`/`汁物`/`主食` など。提案由来でない場合はNoneもあり得る |
 | recipe_id | int (FK → recipes.id, nullable) | 対応するお気に入りレシピ(名前完全一致で自動リンク、なければNone) |
 | genre | string (nullable) | `カレー`/`丼`/`シチュー`など(料理名から自動判定、下記`dish_genres`参照) |
+| is_batch_cooked | bool | 作り置きフラグ。trueなら`fridge_items`(category=「作り置き料理」)へ自動登録 |
 
 ### meal_dish_ingredients(品目が使った食材の参照)
 `meal_dishes`に対する1:N。メニューが「使った食材」の参照だけを持つ(分量・切り方などの詳細はレシピ側の役割、`recipes.ingredients`)。献立提案(`POST /api/suggestions`)のツールスキーマ(`MENU_PROPOSAL_TOOL`)が各品目ごとに返す食材名リストをそのまま保存する(2026-09-15〜)。将来的に`ingredient_categories`マスターとの連携(表記揺れ吸収、冷蔵庫在庫との突き合わせ)を検討予定(#33)。

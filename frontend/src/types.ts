@@ -33,6 +33,7 @@ export interface MealDish {
   recipe_id: number | null
   genre: string | null
   ingredients: string[]
+  is_batch_cooked: boolean
 }
 
 export interface UserSettings {
@@ -58,6 +59,7 @@ export interface SuggestionRequest {
   servings: number
   user_request: string
   lookback_days: number
+  target_date: string
 }
 
 export interface SuggestedDish {

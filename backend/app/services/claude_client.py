@@ -134,7 +134,19 @@ CLASSIFY_INGREDIENT_MODEL = "claude-haiku-4-5"
 
 # 冷蔵庫・パントリー共通の食材/食品カテゴリ語彙。
 # frontend/src/pages/FridgePage.tsx, PantryPage.tsx の CATEGORY_ORDER と揃えること。
-CATEGORY_VOCAB = ["野菜", "肉", "魚介", "卵・乳製品", "主食", "果物", "調味料", "油", "乾物・缶詰", "その他"]
+CATEGORY_VOCAB = [
+    "野菜",
+    "肉",
+    "魚介",
+    "卵・乳製品",
+    "主食",
+    "果物",
+    "調味料",
+    "油",
+    "乾物・缶詰",
+    "作り置き料理",
+    "その他",
+]
 
 CLASSIFY_INGREDIENT_TOOL = {
     "name": "classify_ingredient",

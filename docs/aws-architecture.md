@@ -87,6 +87,6 @@ flowchart LR
 
 ## 未確定・今後決めること
 
-- 独自ドメインを取得するかどうか(取得する場合はRoute 53 or 外部レジストラ+DNS設定)
-- フェーズ1のインスタンスサイズ(t4g.micro / t4g.small)は実際の負荷を見ながら調整
-- レート制限の実装方式の詳細(#47)
+- 独自ドメインを取得するかどうか(取得する場合はRoute 53 or 外部レジストラ+DNS設定) → [Issue #51](https://github.com/Kedama515/mogumi/issues/51)
+- フェーズ1のインスタンスサイズ(t4g.micro / t4g.small)は実際の負荷を見ながら調整 → [Issue #52](https://github.com/Kedama515/mogumi/issues/52)
+- レート制限の実装方式の詳細 → [Issue #47](https://github.com/Kedama515/mogumi/issues/47)

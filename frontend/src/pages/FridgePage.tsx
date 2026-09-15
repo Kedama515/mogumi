@@ -21,6 +21,7 @@ export function FridgePage() {
   const [name, setName] = useState('')
   const [memo, setMemo] = useState('')
   const [loading, setLoading] = useState(true)
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   async function reload() {
     setItems(await api.listFridge())
@@ -44,6 +45,10 @@ export function FridgePage() {
     await reload()
   }
 
+  function toggleGroup(category: string) {
+    setCollapsed((prev) => ({ ...prev, [category]: !prev[category] }))
+  }
+
   return (
     <div className="page">
       <form className="card inline-form" onSubmit={handleAdd}>
@@ -57,27 +62,33 @@ export function FridgePage() {
       ) : items.length === 0 ? (
         <p>冷蔵庫は空です。</p>
       ) : (
-        groupByCategory(items).map(([category, categoryItems]) => (
-          <div key={category} className="fridge-group">
-            <h3 className="fridge-group-title">
-              {category} <span className="muted">({categoryItems.length})</span>
-            </h3>
-            <ul className="item-list">
-              {categoryItems.map((item) => (
-                <li key={item.id} className="card">
-                  <div>
-                    <strong>{item.name}</strong>
-                    <span className="muted"> 追加日: {item.added_date}</span>
-                    {item.memo && <div className="muted">{item.memo}</div>}
-                  </div>
-                  <button className="ghost" onClick={() => handleDelete(item.id)}>
-                    削除
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+        groupByCategory(items).map(([category, categoryItems]) => {
+          const isCollapsed = Boolean(collapsed[category])
+          return (
+            <div key={category} className="fridge-group">
+              <button className="fridge-group-title" onClick={() => toggleGroup(category)}>
+                <span className="fridge-group-arrow">{isCollapsed ? '▶' : '▼'}</span>
+                {category} <span className="muted">({categoryItems.length})</span>
+              </button>
+              {!isCollapsed && (
+                <ul className="item-list">
+                  {categoryItems.map((item) => (
+                    <li key={item.id} className="card">
+                      <div>
+                        <strong>{item.name}</strong>
+                        <span className="muted"> 追加日: {item.added_date}</span>
+                        {item.memo && <div className="muted">{item.memo}</div>}
+                      </div>
+                      <button className="ghost" onClick={() => handleDelete(item.id)}>
+                        削除
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )
+        })
       )}
     </div>
   )

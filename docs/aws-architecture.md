@@ -85,6 +85,25 @@ flowchart LR
 - IAMロールはBedrock呼び出しに必要な権限(`bedrock:InvokeModel`など)のみを付与し、他のAWSサービスへの権限は持たせない(最小権限の原則)
 - `MOGUMI_SECRET_KEY`(JWT署名鍵)は引き続き環境変数で管理し、AWS Systems Manager Parameter StoreやSecrets Managerへの格納も検討する(フェーズ2で本格検討)
 
+## アカウント構成
+
+- 既存のAWSアカウントをAWS Organizationsの管理アカウントとし、その配下に「mogumi」専用のメンバーアカウントを新規作成する(コストの切り分け・影響範囲の隔離のため)
+- メンバーアカウント作成時のrootメールアドレスは、プラスアドレス方式(例: `本来のアドレス+mogumi@gmail.com`)で発行する
+- メンバーアカウント作成時のIAMロール名はデフォルトの`OrganizationAccountAccessRole`のまま変更しない(命名を変える実質的なセキュリティ上のメリットはなく、AWS公式ドキュメントとの整合性を優先する)
+- 日常的なアクセスはIAM Identity Centerで一元化する(管理アカウント側で有効化し、権限セットをmogumiアカウントに割り当てる)。`OrganizationAccountAccessRole`は管理アカウントからの緊急時アクセス経路という位置づけ
+
+### タグ運用ルール
+
+mogumiアカウント自体、および中で作成する全リソース(EC2・EBS・RDS等)に、以下のタグを標準で付与する。コスト管理(月$30の予算をCost Explorerで正確に追う)とリソース整理のため。
+
+| キー | 値の例 | 備考 |
+|---|---|---|
+| `Project` | `mogumi` | 固定 |
+| `Environment` | `personal` | フェーズ2で本格公開したら`production`等に更新する |
+| `Owner` | (本人の名前 or ハンドル名) | |
+
+キーは大文字始まりで統一する(`project`のような小文字表記は別タグとして扱われてしまうため)。
+
 ## 未確定・今後決めること
 
 - 独自ドメインを取得するかどうか(取得する場合はRoute 53 or 外部レジストラ+DNS設定) → [Issue #51](https://github.com/Kedama515/mogumi/issues/51)

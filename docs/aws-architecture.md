@@ -86,6 +86,18 @@ flowchart LR
 - IAMロールはBedrock呼び出しに必要な権限(`bedrock:InvokeModel`など)のみを付与し、他のAWSサービスへの権限は持たせない(最小権限の原則)
 - `MOGUMI_SECRET_KEY`(JWT署名鍵)は引き続き環境変数で管理し、AWS Systems Manager Parameter StoreやSecrets Managerへの格納も検討する(フェーズ2で本格検討)
 
+## アカウント初期設定チェックリスト
+
+Organizations/メンバーアカウント作成の前後で対応する、アカウントレベルの運用設定。
+
+- [ ] root MFAの設定(対応済み)
+- [ ] AWS Budgetsで予算アラートを設定する → [Issue #53](https://github.com/Kedama515/mogumi/issues/53)
+- [ ] CloudTrailが有効化されているか確認する → [Issue #54](https://github.com/Kedama515/mogumi/issues/54)
+- [ ] IAM Identity Centerのホームリージョンを決定する → [Issue #55](https://github.com/Kedama515/mogumi/issues/55)
+- [ ] AWSアカウントの代替連絡先を設定する → [Issue #56](https://github.com/Kedama515/mogumi/issues/56)
+- [ ] GuardDuty(脅威検知)を有効化する → [Issue #57](https://github.com/Kedama515/mogumi/issues/57)
+- サポートプランはBasic(無料)のままでよい、AWS Configは個人開発の規模ではオーバースペックなので現時点では対応しない
+
 ## アカウント構成
 
 - 既存のAWSアカウントをAWS Organizationsの管理アカウントとし、その配下に「mogumi」専用のメンバーアカウントを新規作成する(コストの切り分け・影響範囲の隔離のため)

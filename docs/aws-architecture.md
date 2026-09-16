@@ -77,6 +77,7 @@ flowchart LR
 | HTTPS証明書 | Let's Encrypt(certbot) | ACMでALBのHTTPSリスナーに証明書を割り当て(certbotの更新運用が不要になる) |
 | DNS | レジストラのDNSのまま、または未取得 | 独自ドメインを取得する場合はRoute 53で管理し、エイリアスレコードでALBを指す(#51) |
 | レート制限 | なし | プラン別(`users.plan`)の上限をアプリ側で実装。カウンタの保存先はRDSか、必要ならElastiCache(Redis) |
+| 認証 | 自前JWT + bcrypt | Amazon Cognito(User Pools)へ移行。パスワードリセット・メール確認・MFAをカバーできる(無料枠は月5万MAUまで、[Issue #47](https://github.com/Kedama515/mogumi/issues/47)) |
 | 監視 | 最低限のCloudWatch Logs | CloudWatchアラーム(エラー率・レイテンシ・コスト)を追加 |
 | その他 | - | #47の各項目(利用規約・パスワードリセット・メール確認等)に対応 |
 

@@ -8,6 +8,7 @@ mogumiを外部公開するための、AWS上の構成案。詳細な検討経�
 - 基盤はAWSに統一する。理由は主に、フェーズ間で基盤ごと乗り換える移行リスクを避けられること、Claude呼び出しをAmazon Bedrock経由にすることでAPIキー管理が不要になること、ログ管理([Issue #48](https://github.com/Kedama515/mogumi/issues/48))もCloudWatch Logsでカバーできること
 - 予算目安: 月$30程度(EC2代+Bedrock従量課金込み)。AWS無料利用枠は使用済みの前提でコストを見積もる
 - Claude呼び出しは `Anthropic` SDKの直接呼び出しから、Amazon Bedrock経由(`AnthropicBedrock`クライアント等)に切り替える。実装時は最新のドキュメントでモデルID・SDK仕様を確認すること(記憶に頼らない)
+- リソースの構築はTerraform(IaC)で行う。手動コンソール操作は避け、タグ運用ルールの徹底やフェーズ2への構成変更を再現性を持って進められるようにする
 
 ## フェーズ1: 限定公開(知人向け)
 

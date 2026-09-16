@@ -74,6 +74,8 @@ flowchart LR
 |---|---|---|
 | DB | EC2上のSQLite | RDS PostgreSQL(複数ユーザーの同時書き込みに対応) |
 | コンピュート | EC2 1台 | ALB配下でEC2複数台 or ECS Fargateでスケール(必要になってから) |
+| HTTPS証明書 | Let's Encrypt(certbot) | ACMでALBのHTTPSリスナーに証明書を割り当て(certbotの更新運用が不要になる) |
+| DNS | レジストラのDNSのまま、または未取得 | 独自ドメインを取得する場合はRoute 53で管理し、エイリアスレコードでALBを指す(#51) |
 | レート制限 | なし | プラン別(`users.plan`)の上限をアプリ側で実装。カウンタの保存先はRDSか、必要ならElastiCache(Redis) |
 | 監視 | 最低限のCloudWatch Logs | CloudWatchアラーム(エラー率・レイテンシ・コスト)を追加 |
 | その他 | - | #47の各項目(利用規約・パスワードリセット・メール確認等)に対応 |

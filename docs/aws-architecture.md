@@ -130,6 +130,8 @@ mogumiアカウント自体、および中で作成する全リソース(EC2・E
 
 `environment`の値はタグ運用ルールの`Environment`タグと揃える(`personal` → フェーズ2で`production`)。「両方の環境が対象」であることを明示したい場合は環境名を省略せず`all`と書く(名前から意図的に省いたのか書き忘れたのか区別がつくように)。
 
+IAM Identity CenterのGroupとPermission setのように、同じ用途で名前が衝突しうる場合はリソース種別をサフィックスで明示する(すべて小文字、ハイフン区切りで統一)。例: Group `mogumi-admin-group` / Permission set `mogumi-admin`。
+
 ## 未確定・今後決めること
 
 - 独自ドメインを取得するかどうか(取得する場合はRoute 53 or 外部レジストラ+DNS設定) → [Issue #51](https://github.com/Kedama515/mogumi/issues/51)

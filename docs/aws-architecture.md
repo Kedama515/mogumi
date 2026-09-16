@@ -93,7 +93,7 @@ Organizations/メンバーアカウント作成の前後で対応する、アカ
 - [ ] root MFAの設定(対応済み)
 - [ ] AWS Budgetsで予算アラートを設定する → [Issue #53](https://github.com/Kedama515/mogumi/issues/53)
 - [ ] CloudTrailが有効化されているか確認する → [Issue #54](https://github.com/Kedama515/mogumi/issues/54)
-- [ ] IAM Identity Centerのホームリージョンを決定する → [Issue #55](https://github.com/Kedama515/mogumi/issues/55)
+- [x] IAM Identity Centerのホームリージョンを決定する(`ap-northeast-1`) → [Issue #55](https://github.com/Kedama515/mogumi/issues/55)
 - [ ] AWSアカウントの代替連絡先を設定する → [Issue #56](https://github.com/Kedama515/mogumi/issues/56)
 - [ ] GuardDuty(脅威検知)を有効化する → [Issue #57](https://github.com/Kedama515/mogumi/issues/57)
 - サポートプランはBasic(無料)のままでよい、AWS Configは個人開発の規模ではオーバースペックなので現時点では対応しない
@@ -104,6 +104,7 @@ Organizations/メンバーアカウント作成の前後で対応する、アカ
 - メンバーアカウント作成時のrootメールアドレスは、プラスアドレス方式(例: `本来のアドレス+mogumi@gmail.com`)で発行する
 - メンバーアカウント作成時のIAMロール名はデフォルトの`OrganizationAccountAccessRole`のまま変更しない(命名を変える実質的なセキュリティ上のメリットはなく、AWS公式ドキュメントとの整合性を優先する)
 - 日常的なアクセスはIAM Identity Centerで一元化する(管理アカウント側で有効化し、権限セットをmogumiアカウントに割り当てる)。`OrganizationAccountAccessRole`は管理アカウントからの緊急時アクセス経路という位置づけ
+- IAM Identity Centerのホームリージョンは`ap-northeast-1`(東京)とする(決定: 2026-09-16、[Issue #55](https://github.com/Kedama515/mogumi/issues/55))
 
 ### タグ運用ルール
 

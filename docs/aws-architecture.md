@@ -117,6 +117,18 @@ mogumiアカウント自体、および中で作成する全リソース(EC2・E
 
 キーは大文字始まりで統一する(`project`のような小文字表記は別タグとして扱われてしまうため)。
 
+### 命名規則
+
+リソース名にも`mogumi`プレフィックスを付け、フェーズ(環境)による違いが名前だけで分かるようにする。
+
+| スコープ | パターン | 例 |
+|---|---|---|
+| アカウント全体対象(フェーズ問わず一つだけ存在するもの) | `mogumi-all-<resource-type>` | `mogumi-all-budget` |
+| フェーズ固有のリソース | `mogumi-<environment>-<resource-type>[-<qualifier>]` | `mogumi-personal-ec2-app`, `mogumi-personal-sg-web` |
+| IAM Identity Center権限セット等、フェーズの概念がないアクセス制御系 | `mogumi-<用途>` | `mogumi-admin` |
+
+`environment`の値はタグ運用ルールの`Environment`タグと揃える(`personal` → フェーズ2で`production`)。「両方の環境が対象」であることを明示したい場合は環境名を省略せず`all`と書く(名前から意図的に省いたのか書き忘れたのか区別がつくように)。
+
 ## 未確定・今後決めること
 
 - 独自ドメインを取得するかどうか(取得する場合はRoute 53 or 外部レジストラ+DNS設定) → [Issue #51](https://github.com/Kedama515/mogumi/issues/51)

@@ -94,7 +94,7 @@ flowchart LR
 Organizations/メンバーアカウント作成の前後で対応する、アカウントレベルの運用設定。
 
 - [ ] root MFAの設定(対応済み)
-- [ ] AWS Budgetsで予算アラートを設定する → [Issue #53](https://github.com/Kedama515/mogumi/issues/53)
+- [x] AWS Budgetsで予算アラートを設定する(`mogumi-all-budget`、固定・月$30、Unblended costs、実績83%/予測100%でアラート) → [Issue #53](https://github.com/Kedama515/mogumi/issues/53)
 - [ ] CloudTrailが有効化されているか確認する → [Issue #54](https://github.com/Kedama515/mogumi/issues/54)
 - [x] IAM Identity Centerのホームリージョンを決定する(`ap-northeast-1`) → [Issue #55](https://github.com/Kedama515/mogumi/issues/55)
 - [ ] AWSアカウントの代替連絡先を設定する → [Issue #56](https://github.com/Kedama515/mogumi/issues/56)

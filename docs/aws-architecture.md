@@ -95,7 +95,7 @@ Organizations/メンバーアカウント作成の前後で対応する、アカ
 
 - [ ] root MFAの設定(対応済み)
 - [x] AWS Budgetsで予算アラートを設定する(`mogumi-all-budget`、固定・月$30、Unblended costs、実績83%/予測100%でアラート) → [Issue #53](https://github.com/Kedama515/mogumi/issues/53)
-- [ ] CloudTrailが有効化されているか確認する → [Issue #54](https://github.com/Kedama515/mogumi/issues/54)
+- [x] CloudTrailが有効化されているか確認する(組織の証跡`mogumi-all-organization-trail`を作成、S3保存・SSE-S3・ログファイル検証あり、CloudWatch Logs連携は見送り→[#69](https://github.com/Kedama515/mogumi/issues/69)) → [Issue #54](https://github.com/Kedama515/mogumi/issues/54)
 - [x] IAM Identity Centerのホームリージョンを決定する(`ap-northeast-1`) → [Issue #55](https://github.com/Kedama515/mogumi/issues/55)
 - [ ] AWSアカウントの代替連絡先を設定する → [Issue #56](https://github.com/Kedama515/mogumi/issues/56)
 - [ ] GuardDuty(脅威検知)を有効化する → [Issue #57](https://github.com/Kedama515/mogumi/issues/57)

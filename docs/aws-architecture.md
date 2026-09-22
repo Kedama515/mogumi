@@ -115,8 +115,8 @@ mogumiアカウント自体、および中で作成する全リソース(EC2・E
 
 | キー | 値の例 | 備考 |
 |---|---|---|
-| `Project` | `mogumi` | 固定 |
-| `Environment` | `personal` | フェーズ2で本格公開したら`production`等に更新する |
+| `Project` | `mogumi` | mogumi専用のリソース。特定プロジェクトに紐付かないアカウント共通のインフラ(組織の証跡など)には`shared`を使う |
+| `Environment` | `personal` | フェーズ2で本格公開したら`production`等に更新する。フェーズ問わず対象のリソースには`all`を使う |
 | `Owner` | (本人の名前 or ハンドル名) | |
 
 キーは大文字始まりで統一する(`project`のような小文字表記は別タグとして扱われてしまうため)。
